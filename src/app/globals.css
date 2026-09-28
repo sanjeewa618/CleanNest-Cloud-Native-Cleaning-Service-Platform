@@ -1,0 +1,314 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap');
+
+:root {
+  /* Brand Theme Colors */
+  --primary-deep: #14532d;
+  --primary: #15803d;
+  --primary-hover: #166534;
+  --primary-bright: #22c55e;
+  --primary-light: #4ade80;
+  --primary-mint: #dcfce7;
+  --primary-soft: #f0fdf4;
+  --primary-subtle: #f8fafc;
+  
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, #15803d 0%, #16a34a 100%);
+  --gradient-banner: linear-gradient(135deg, #1b6a3e 0%, #2e9f5e 100%);
+  --gradient-emerald: linear-gradient(135deg, #065f46 0%, #059669 100%);
+  --gradient-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
+  --gradient-hero: linear-gradient(180deg, rgba(240, 253, 244, 0.6) 0%, #ffffff 100%);
+
+  /* Neutrals */
+  --bg-page: #f8fafc;
+  --surface: #ffffff;
+  --surface-alt: #f1f5f9;
+  --surface-muted: #f8fafc;
+  
+  /* Text */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --text-light: #94a3b8;
+  --text-on-primary: #ffffff;
+
+  /* Borders & Accents */
+  --border: #e2e8f0;
+  --border-light: #f1f5f9;
+  --border-active: #86efac;
+  --warning: #f59e0b;
+  --warning-soft: #fef3c7;
+  --danger: #ef4444;
+  --danger-soft: #fee2e2;
+  --info: #0284c7;
+  --info-soft: #e0f2fe;
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 6px 16px -2px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 14px 28px -4px rgba(22, 101, 52, 0.08), 0 6px 12px -2px rgba(0, 0, 0, 0.04);
+  --shadow-xl: 0 22px 38px -6px rgba(22, 101, 52, 0.12), 0 10px 16px -4px rgba(0, 0, 0, 0.04);
+  --shadow-primary: 0 10px 24px -4px rgba(21, 128, 61, 0.4);
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 26px;
+  --radius-pill: 9999px;
+
+  /* Font */
+  --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+  font-family: var(--font-main);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  outline: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+input, textarea, select {
+  font-family: inherit;
+  outline: none;
+  border: 1px solid var(--border);
+  transition: all 0.2s ease;
+}
+
+input:focus, textarea:focus, select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+}
+
+/* Base Utility Classes */
+.container {
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.container-narrow {
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.badge-green {
+  background-color: var(--primary-mint);
+  color: var(--primary-deep);
+}
+
+.badge-soft {
+  background-color: var(--primary-soft);
+  color: var(--primary);
+  border: 1px solid var(--border-active);
+}
+
+.badge-warning {
+  background-color: var(--warning-soft);
+  color: #b45309;
+}
+
+.badge-info {
+  background-color: var(--info-soft);
+  color: #0369a1;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: var(--radius-pill);
+  transition: all 0.25s ease;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: var(--gradient-primary);
+  color: var(--text-on-primary);
+  box-shadow: var(--shadow-primary);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 26px -3px rgba(21, 128, 61, 0.5);
+  background: linear-gradient(135deg, #166534 0%, #15803d 100%);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-secondary {
+  background-color: var(--surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-xs);
+}
+
+.btn-secondary:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background-color: var(--primary-soft);
+  transform: translateY(-2px);
+}
+
+.btn-outline-green {
+  background-color: transparent;
+  color: var(--primary);
+  border: 1.5px solid var(--primary);
+}
+
+.btn-outline-green:hover {
+  background-color: var(--primary);
+  color: #ffffff;
+}
+
+.btn-white {
+  background-color: #ffffff;
+  color: var(--primary-deep);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  font-weight: 700;
+}
+
+.btn-white:hover {
+  background-color: #f8fafc;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+}
+
+.btn-sm {
+  padding: 8px 16px;
+  font-size: 0.85rem;
+}
+
+.btn-lg {
+  padding: 16px 32px;
+  font-size: 1.05rem;
+}
+
+/* Glassmorphism */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+/* Card Styles */
+.card-clean {
+  background-color: var(--surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.card-clean:hover {
+  box-shadow: var(--shadow-lg);
+  border-color: var(--primary-mint);
+  transform: translateY(-3px);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+.pulse-indicator {
+  animation: pulseGlow 2s infinite;
+}
+
+/* Mobile App Frame Preview (for hero showcase) */
+.phone-mockup-frame {
+  width: 320px;
+  height: 640px;
+  background: #ffffff;
+  border-radius: 40px;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.2), 0 0 0 10px #1e293b;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
