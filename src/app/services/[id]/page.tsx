@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useCleanNest } from '@/context/CleanNestContext';
 import {
@@ -27,7 +27,10 @@ import {
 export default function ServiceDetailsPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { services, cleaners, reviews, setDraftBooking } = useCleanNest();
+
+  const preselectedCleanerId = searchParams?.get('cleaner');
 
   const serviceSlug = (params?.id as string) || 'home-cleaning';
   const service = services.find((s) => s.slug === serviceSlug) || services[0];
@@ -41,6 +44,9 @@ export default function ServiceDetailsPage() {
 
   const selectedPackage = service.packages.find((p) => p.id === selectedPackageId) || service.packages[0];
   const totalPrice = (selectedPackage ? selectedPackage.pricePerHour : service.basePrice) * selectedHours;
+
+  const categoryCleaners = cleaners.filter(c => c.specialties.includes(service.name));
+  const displayCleaners = categoryCleaners.length > 0 ? categoryCleaners : cleaners.slice(0, 2);
 
   const handleShare = () => {
     if (typeof window !== 'undefined') {
@@ -60,7 +66,14 @@ export default function ServiceDetailsPage() {
       hours: selectedHours,
       subtotal: totalPrice
     });
-    router.push(`/booking?service=${service.slug}&package=${selectedPackage.id}`);
+    const queryParams = new URLSearchParams({
+      service: service.slug,
+      package: selectedPackage.id
+    });
+    if (preselectedCleanerId) {
+      queryParams.set('cleaner', preselectedCleanerId);
+    }
+    router.push(`/booking?${queryParams.toString()}`);
   };
 
   const getIncludedIcon = (iconName: string) => {
@@ -582,30 +595,31 @@ export default function ServiceDetailsPage() {
                 Cleaners Available Today
               </h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {cleaners.slice(0, 2).map((c) => (
+                {displayCleaners.map((c) => (
                   <div
                     key={c.id}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      padding: '8px',
-                      borderRadius: '12px',
-                      backgroundColor: '#f8fafc'
+                      padding: '10px',
+                      borderRadius: '16px',
+                      backgroundColor: '#f8fafc',
+                      border: '1px solid #f1f5f9'
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       <img
                         src={c.avatar}
                         alt={c.name}
-                        style={{ width: '38px', height: '38px', borderRadius: '50%', objectFit: 'cover' }}
+                        style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #ffffff', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}
                       />
                       <div>
-                        <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#0f172a' }}>{c.name}</div>
-                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>⭐ {c.rating} • {c.jobsCompleted} jobs</div>
+                        <div style={{ fontWeight: 800, fontSize: '0.9rem', color: '#0f172a' }}>{c.name}</div>
+                        <div style={{ fontSize: '0.78rem', color: '#64748b' }}>⭐ {c.rating} • {c.jobsCompleted} jobs done</div>
                       </div>
                     </div>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#15803d', backgroundColor: '#dcfce7', padding: '3px 8px', borderRadius: '9999px' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#15803d', backgroundColor: '#dcfce7', padding: '4px 10px', borderRadius: '9999px' }}>
                       Available
                     </span>
                   </div>

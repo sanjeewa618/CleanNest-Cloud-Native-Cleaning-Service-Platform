@@ -15,34 +15,51 @@ export const HeroSection: React.FC = () => {
 
   const handleStartBooking = (e: React.FormEvent) => {
     e.preventDefault();
-    router.push(`/services/${selectedService}`);
+    const popularSection = document.getElementById('popular-services');
+    if (popularSection) {
+      popularSection.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      router.push('/#popular-services');
+    }
   };
 
   return (
     <section style={{
-      background: 'linear-gradient(180deg, #ecfdf5 0%, #f8fafc 100%)',
-      padding: '48px 0 64px 0',
       position: 'relative',
-      overflow: 'hidden'
+      padding: '80px 0 100px 0',
+      minHeight: '650px',
+      display: 'flex',
+      alignItems: 'center',
+      overflow: 'hidden',
+      backgroundColor: '#ecfdf5' // Fallback color
     }}>
-      {/* Decorative leaf background blurs */}
+      {/* Background Image on the right half */}
       <div style={{
         position: 'absolute',
-        top: '-10%',
-        right: '-5%',
-        width: '450px',
-        height: '450px',
-        borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(74, 222, 128, 0.15) 0%, rgba(255,255,255,0) 70%)',
-        pointerEvents: 'none'
+        top: 0,
+        right: 0,
+        width: '55%',
+        height: '100%',
+        backgroundImage: 'url("/images/hero_cleaner.jpg")',
+        backgroundSize: 'cover',
+        backgroundPosition: 'left center', // The person is on the left side of the photo, so align it here
+        zIndex: 0
       }} />
 
-      <div className="container">
+      {/* Gradient Overlay (blending the solid left side into the image) */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'linear-gradient(90deg, #ecfdf5 45%, rgba(236, 253, 245, 0.7) 55%, rgba(236, 253, 245, 0) 65%)',
+        zIndex: 1
+      }} />
+
+      <div className="container" style={{ position: 'relative', zIndex: 2 }}>
         <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-          alignItems: 'center',
-          gap: '48px'
+          maxWidth: '650px'
         }}>
           {/* Left Column: Headlines & Instant Booking Widget */}
           <div>
@@ -218,96 +235,6 @@ export const HeroSection: React.FC = () => {
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.875rem', color: '#334155', fontWeight: 600 }}>
                 <Sparkles size={18} color="#15803d" />
                 <span>Eco-Friendly Supplies</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Column: Visual Showcase Matching Screen 1 & App Aesthetics */}
-          <div style={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
-            {/* Main Hero Cleaner Image */}
-            <div style={{
-              position: 'relative',
-              width: '100%',
-              maxWidth: '460px',
-              borderRadius: '32px',
-              overflow: 'hidden',
-              boxShadow: '0 25px 50px -12px rgba(22, 101, 52, 0.25)',
-              border: '6px solid #ffffff'
-            }}>
-              <img
-                src="/images/hero_cleaner.jpg"
-                alt="Professional cleaner vacuuming living room sofa"
-                style={{
-                  width: '100%',
-                  height: 'auto',
-                  display: 'block',
-                  objectFit: 'cover'
-                }}
-              />
-
-              {/* Floating Verified Badge */}
-              <div style={{
-                position: 'absolute',
-                top: '20px',
-                left: '20px',
-                backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                backdropFilter: 'blur(8px)',
-                borderRadius: '16px',
-                padding: '10px 16px',
-                boxShadow: '0 8px 20px rgba(0, 0, 0, 0.1)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px'
-              }}>
-                <div style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '50%',
-                  backgroundColor: '#dcfce7',
-                  color: '#15803d',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  <ShieldCheck size={20} />
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.875rem', fontWeight: 700, color: '#0f172a' }}>Background Checked</div>
-                  <div style={{ fontSize: '0.75rem', color: '#15803d', fontWeight: 600 }}>Vetted & Insured</div>
-                </div>
-              </div>
-
-              {/* Floating Service Card at Bottom Right */}
-              <div style={{
-                position: 'absolute',
-                bottom: '20px',
-                right: '20px',
-                backgroundColor: '#ffffff',
-                borderRadius: '18px',
-                padding: '12px 18px',
-                boxShadow: '0 12px 28px rgba(0, 0, 0, 0.15)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                maxWidth: '240px'
-              }}>
-                <div style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '12px',
-                  background: 'linear-gradient(135deg, #15803d 0%, #22c55e 100%)',
-                  color: '#ffffff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0
-                }}>
-                  <Sparkles size={22} />
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0f172a' }}>Home Cleaning</div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b' }}>From $65/hr • Same-day</div>
-                </div>
               </div>
             </div>
           </div>

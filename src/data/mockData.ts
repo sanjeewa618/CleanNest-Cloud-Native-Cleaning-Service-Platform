@@ -338,6 +338,43 @@ export const INITIAL_SERVICES: ServiceItem[] = [
       }
     ],
     basePrice: 58
+  },
+  {
+    id: 'srv-7',
+    slug: 'garden-cleaning',
+    name: 'Garden Cleaning',
+    category: 'outdoor',
+    rating: 4.7,
+    reviewCount: 420,
+    duration: '2-4 Hours',
+    image: '/images/hero_cleaner.jpg',
+    iconName: 'Sparkles',
+    shortDesc: 'Keeping your garden and parking area clean is a tough job, but we are here to help.',
+    fullDesc: 'We provide outdoor cleaning too. Keep your garden, patio, and driveways perfectly clean and presentable with our specialized outdoor cleaning equipment and eco-friendly moss/algae removers.',
+    badges: ['Outdoor Specialists', 'Eco-Friendly', 'Pressure Washing'],
+    whatsIncluded: [
+      { icon: 'Sparkles', title: 'Pressure Washing', description: 'Deep cleaning of patios and driveways' },
+      { icon: 'Wind', title: 'Debris Removal', description: 'Sweeping and bagging fallen leaves and debris' },
+      { icon: 'ShieldCheck', title: 'Weed Control', description: 'Eco-friendly moss and weed treatment' }
+    ],
+    packages: [
+      {
+        id: 'pkg-garden-std',
+        name: 'Standard Sweep',
+        pricePerHour: 45,
+        description: 'Basic sweep and debris bagging for small yards.',
+        features: ['Sweeping', 'Leaf Bagging']
+      },
+      {
+        id: 'pkg-garden-deep',
+        name: 'Full Outdoor Revival',
+        pricePerHour: 80,
+        recommended: true,
+        description: 'Includes pressure washing and weed treatment.',
+        features: ['Pressure Washing', 'Weed Treatment', 'Full Sweeping']
+      }
+    ],
+    basePrice: 45
   }
 ];
 
@@ -354,7 +391,7 @@ export const INITIAL_CLEANERS: Cleaner[] = [
     email: 'marcus.v@cleannest.com',
     isOnline: true,
     status: 'active',
-    specialties: ['Deep Cleaning', 'Sofa Steam Extraction', 'Move In/Out'],
+    specialties: ['Deep Cleaning', 'Sofa Cleaning', 'Move In/Out'],
     earnings: {
       today: 185,
       thisWeek: 940,
@@ -374,7 +411,7 @@ export const INITIAL_CLEANERS: Cleaner[] = [
     email: 'elena.r@cleannest.com',
     isOnline: true,
     status: 'active',
-    specialties: ['Home Cleaning', 'Kitchen Detailing', 'Organic Products'],
+    specialties: ['Home Cleaning', 'Kitchen Cleaning', 'Organic Products'],
     earnings: {
       today: 210,
       thisWeek: 1120,

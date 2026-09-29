@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import { useCleanNest } from '@/context/CleanNestContext';
 import {
@@ -36,6 +37,37 @@ export const Navbar: React.FC = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState('home');
+  const pathname = usePathname();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (pathname !== '/') {
+        if (pathname.includes('/bookings')) setActiveSection('bookings');
+        else setActiveSection('');
+        return;
+      }
+
+      // Check sections for home page
+      const scrollPosition = window.scrollY + window.innerHeight / 3;
+      
+      const aboutSection = document.getElementById('about-us');
+      const servicesSection = document.getElementById('popular-services');
+      
+      if (aboutSection && scrollPosition >= aboutSection.offsetTop) {
+        setActiveSection('about-us');
+      } else if (servicesSection && scrollPosition >= servicesSection.offsetTop) {
+        setActiveSection('services');
+      } else {
+        setActiveSection('home');
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    handleScroll(); // Initial check
+
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [pathname]);
 
   const activeBookingsCount = bookings.filter(
     (b) => b.status !== 'completed' && b.status !== 'cancelled'
@@ -129,54 +161,20 @@ export const Navbar: React.FC = () => {
 
           {/* Center Links (Desktop) */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '28px' }} className="desktop-nav-links">
-            <Link
-              href="/"
-              style={{
-                fontSize: '0.9375rem',
-                fontWeight: 600,
-                color: '#1e293b',
-                transition: 'color 0.2s'
-              }}
-            >
+            <Link href="/" className={`nav-link ${activeSection === 'home' ? 'active' : ''}`}>
               Home
             </Link>
 
-            <Link
-              href="/#popular-services"
-              style={{
-                fontSize: '0.9375rem',
-                fontWeight: 600,
-                color: '#64748b',
-                transition: 'color 0.2s'
-              }}
-            >
+            <Link href="/#popular-services" className={`nav-link ${activeSection === 'services' ? 'active' : ''}`}>
               Services
             </Link>
 
-            <Link
-              href="/services/home-cleaning"
-              style={{
-                fontSize: '0.9375rem',
-                fontWeight: 600,
-                color: '#64748b',
-                transition: 'color 0.2s'
-              }}
-            >
-              Packages & Pricing
+            <Link href="/#about-us" className={`nav-link ${activeSection === 'about-us' ? 'active' : ''}`}>
+              About Us
             </Link>
 
-            <Link
-              href="/bookings"
-              style={{
-                fontSize: '0.9375rem',
-                fontWeight: 600,
-                color: '#1e293b',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}
-            >
-              <span>My Bookings</span>
+            <Link href="/bookings" className={`nav-link ${activeSection === 'bookings' ? 'active' : ''}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <span>Bookings</span>
               {activeBookingsCount > 0 && (
                 <span style={{
                   backgroundColor: '#15803d',
@@ -195,37 +193,7 @@ export const Navbar: React.FC = () => {
               )}
             </Link>
 
-            {role === 'cleaner' && (
-              <Link
-                href="/cleaner"
-                style={{
-                  fontSize: '0.9375rem',
-                  fontWeight: 700,
-                  color: '#15803d',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px'
-                }}
-              >
-                <Sparkles size={16} /> Cleaner Portal
-              </Link>
-            )}
-
-            {role === 'admin' && (
-              <Link
-                href="/admin"
-                style={{
-                  fontSize: '0.9375rem',
-                  fontWeight: 700,
-                  color: '#0284c7',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px'
-                }}
-              >
-                <Shield size={16} /> Admin Portal
-              </Link>
-            )}
+            {/* Role-specific links removed from navbar per user request */}
           </div>
 
           {/* Right Actions */}
@@ -397,8 +365,8 @@ export const Navbar: React.FC = () => {
                   </Link>
 
                   <Link
-                    href="/cleaner"
-                    onClick={() => { setRole('cleaner'); setShowUserMenu(false); }}
+                    href="/profile"
+                    onClick={() => setShowUserMenu(false)}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -409,25 +377,8 @@ export const Navbar: React.FC = () => {
                       color: '#334155'
                     }}
                   >
-                    <Sparkles size={16} color="#16a34a" />
-                    <span>Cleaner Portal</span>
-                  </Link>
-
-                  <Link
-                    href="/admin"
-                    onClick={() => { setRole('admin'); setShowUserMenu(false); }}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      padding: '8px 10px',
-                      borderRadius: '8px',
-                      fontSize: '0.875rem',
-                      color: '#334155'
-                    }}
-                  >
-                    <Shield size={16} color="#0284c7" />
-                    <span>Admin Dashboard</span>
+                    <User size={16} color="#64748b" />
+                    <span>Profile</span>
                   </Link>
 
                   <div style={{ borderTop: '1px solid #f1f5f9', marginTop: '6px', paddingTop: '6px' }}>
@@ -445,7 +396,7 @@ export const Navbar: React.FC = () => {
                       }}
                     >
                       <LogOut size={16} />
-                      <span>Switch / Sign In</span>
+                      <span>Sign Out</span>
                     </Link>
                   </div>
                 </div>
@@ -454,7 +405,7 @@ export const Navbar: React.FC = () => {
 
             {/* Quick "Book Now" CTA Button */}
             <Link
-              href="/booking"
+              href="/#popular-services"
               className="btn btn-primary"
               style={{
                 padding: '10px 20px',
@@ -494,10 +445,9 @@ export const Navbar: React.FC = () => {
           }}>
             <Link href="/" onClick={() => setMobileMenuOpen(false)} style={{ fontWeight: 600, padding: '8px 0' }}>Home</Link>
             <Link href="/#popular-services" onClick={() => setMobileMenuOpen(false)} style={{ fontWeight: 600, padding: '8px 0' }}>Services</Link>
-            <Link href="/services/home-cleaning" onClick={() => setMobileMenuOpen(false)} style={{ fontWeight: 600, padding: '8px 0' }}>Pricing & Packages</Link>
-            <Link href="/bookings" onClick={() => setMobileMenuOpen(false)} style={{ fontWeight: 600, padding: '8px 0' }}>My Bookings</Link>
-            <Link href="/cleaner" onClick={() => { setRole('cleaner'); setMobileMenuOpen(false); }} style={{ fontWeight: 600, padding: '8px 0', color: 'var(--primary)' }}>Cleaner Portal</Link>
-            <Link href="/admin" onClick={() => { setRole('admin'); setMobileMenuOpen(false); }} style={{ fontWeight: 600, padding: '8px 0', color: '#0284c7' }}>Admin Portal</Link>
+            <Link href="/#about-us" onClick={() => setMobileMenuOpen(false)} style={{ fontWeight: 600, padding: '8px 0' }}>About Us</Link>
+            <Link href="/bookings" onClick={() => setMobileMenuOpen(false)} style={{ fontWeight: 600, padding: '8px 0' }}>Bookings</Link>
+            <Link href="/profile" onClick={() => setMobileMenuOpen(false)} style={{ fontWeight: 600, padding: '8px 0' }}>Profile</Link>
           </div>
         )}
       </nav>
@@ -518,6 +468,31 @@ export const Navbar: React.FC = () => {
           .user-name-text {
             display: none;
           }
+        }
+        .nav-link {
+          font-size: 0.9375rem;
+          font-weight: 600;
+          color: #1e293b;
+          position: relative;
+          text-decoration: none;
+          transition: color 0.2s ease;
+        }
+        .nav-link:hover, .nav-link.active {
+          color: #15803d;
+        }
+        .nav-link::after {
+          content: '';
+          position: absolute;
+          bottom: -6px;
+          left: 0;
+          width: 0%;
+          height: 3px;
+          background-color: #15803d;
+          border-radius: 4px;
+          transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .nav-link:hover::after, .nav-link.active::after {
+          width: 100%;
         }
       `}</style>
     </>

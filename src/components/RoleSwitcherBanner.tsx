@@ -1,36 +1,22 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCleanNest, UserRole } from '@/context/CleanNestContext';
-import { User, Sparkles, Shield, ArrowRight } from 'lucide-react';
+import { User, Sparkles, Shield, ArrowRight, Clock } from 'lucide-react';
 import Link from 'next/link';
 
 export const RoleSwitcherBanner: React.FC = () => {
   const { role, setRole, currentUser } = useCleanNest();
+  const [currentTime, setCurrentTime] = useState<Date | null>(null);
 
-  const roles: { id: UserRole; label: string; icon: React.ReactNode; desc: string; href: string }[] = [
-    {
-      id: 'customer',
-      label: 'Customer Mode',
-      icon: <User size={14} />,
-      desc: 'Browse, book, and review cleaning services',
-      href: '/'
-    },
-    {
-      id: 'cleaner',
-      label: 'Cleaner / Provider Portal',
-      icon: <Sparkles size={14} />,
-      desc: 'Accept jobs, manage schedule & earnings',
-      href: '/cleaner'
-    },
-    {
-      id: 'admin',
-      label: 'Admin Control Center',
-      icon: <Shield size={14} />,
-      desc: 'Oversee bookings, cleaners, and pricing',
-      href: '/admin'
-    }
-  ];
+  useEffect(() => {
+    setCurrentTime(new Date());
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
 
   return (
     <div style={{
@@ -75,35 +61,11 @@ export const RoleSwitcherBanner: React.FC = () => {
           </span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{ color: '#64748b', fontSize: '0.75rem', marginRight: '4px' }}>Switch Actor:</span>
-          {roles.map((r) => {
-            const isActive = role === r.id;
-            return (
-              <Link
-                key={r.id}
-                href={r.href}
-                onClick={() => setRole(r.id)}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  padding: '4px 10px',
-                  borderRadius: '6px',
-                  fontSize: '0.75rem',
-                  fontWeight: isActive ? 700 : 500,
-                  backgroundColor: isActive ? '#15803d' : '#1e293b',
-                  color: isActive ? '#ffffff' : '#cbd5e1',
-                  border: isActive ? '1px solid #22c55e' : '1px solid transparent',
-                  transition: 'all 0.2s ease',
-                  cursor: 'pointer'
-                }}
-              >
-                {r.icon}
-                <span>{r.label}</span>
-              </Link>
-            );
-          })}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#cbd5e1', fontSize: '0.85rem', fontWeight: 500 }}>
+          <Clock size={16} color="#94a3b8" />
+          <span style={{ minWidth: '80px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+            {currentTime ? currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '...'}
+          </span>
         </div>
       </div>
     </div>

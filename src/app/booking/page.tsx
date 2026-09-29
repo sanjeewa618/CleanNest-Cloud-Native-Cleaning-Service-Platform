@@ -34,12 +34,13 @@ function BookingForm() {
     selectedService.packages.find((p) => p.id === packageParam) ||
     selectedService.packages.find((p) => p.recommended) ||
     selectedService.packages[0];
+  const preselectedCleaner = searchParams.get('cleaner');
 
   const [packageId, setPackageId] = useState(initialPackage.id);
   const [hours, setHours] = useState(draftBooking?.hours || 3);
   const [selectedDate, setSelectedDate] = useState('Tomorrow, Oct 1st');
   const [selectedTimeSlot, setSelectedTimeSlot] = useState('10:00 AM - 01:00 PM');
-  const [cleanerChoice, setCleanerChoice] = useState<string>('auto'); // 'auto' or cleaner ID
+  const [cleanerChoice, setCleanerChoice] = useState<string>(preselectedCleaner || 'auto'); // 'auto' or cleaner ID
   const [streetAddress, setStreetAddress] = useState('742 Evergreen Terrace');
   const [apt, setApt] = useState('Apt 4B');
   const [city, setCity] = useState('New York, NY');
@@ -51,6 +52,8 @@ function BookingForm() {
   const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [confirmedBookingId, setConfirmedBookingId] = useState<string | null>(null);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   const currentPkg = selectedService.packages.find((p) => p.id === packageId) || selectedService.packages[0];
 
@@ -101,8 +104,12 @@ function BookingForm() {
     }
   };
 
-  const handleCompleteBooking = () => {
-    setIsSubmitting(true);
+  const handleProceedToPayment = () => {
+    setIsPaymentModalOpen(true);
+  };
+
+  const finalizeBooking = () => {
+    setIsProcessingPayment(true);
 
     const chosenCleaner = cleanerChoice !== 'auto'
       ? cleaners.find((c) => c.id === cleanerChoice)
@@ -141,9 +148,10 @@ function BookingForm() {
         paymentStatus: 'paid'
       });
 
-      setIsSubmitting(false);
+      setIsProcessingPayment(false);
+      setIsPaymentModalOpen(false);
       setConfirmedBookingId(created.id);
-    }, 1200);
+    }, 1500);
   };
 
   if (confirmedBookingId) {
@@ -881,7 +889,7 @@ function BookingForm() {
               {/* Confirm Booking CTA Button */}
               <button
                 type="button"
-                onClick={handleCompleteBooking}
+                onClick={handleProceedToPayment}
                 disabled={isSubmitting}
                 className="btn btn-primary"
                 style={{
@@ -923,6 +931,114 @@ function BookingForm() {
           </div>
         </div>
       </div>
+
+      {/* Payment Modal */}
+      {isPaymentModalOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: '#ffffff',
+            borderRadius: '24px',
+            width: '100%',
+            maxWidth: '480px',
+            padding: '32px',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            position: 'relative'
+          }}>
+            <button
+              onClick={() => !isProcessingPayment && setIsPaymentModalOpen(false)}
+              style={{
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                background: 'none',
+                border: 'none',
+                fontSize: '1.5rem',
+                cursor: 'pointer',
+                color: '#94a3b8'
+              }}
+            >
+              &times;
+            </button>
+
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0f172a', marginBottom: '8px' }}>
+              Payment Details
+            </h2>
+            <p style={{ color: '#64748b', fontSize: '0.95rem', marginBottom: '24px' }}>
+              You have selected {paymentMethod === 'card' ? 'Credit/Debit Card' : paymentMethod === 'apple_pay' ? 'Apple Pay' : 'Cash Post-Clean'}.
+            </p>
+
+            {paymentMethod === 'card' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>Card Number</label>
+                  <input type="text" placeholder="0000 0000 0000 0000" style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', border: '1px solid #cbd5e1', fontSize: '0.95rem' }} />
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>Expiry Date</label>
+                    <input type="text" placeholder="MM/YY" style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', border: '1px solid #cbd5e1', fontSize: '0.95rem' }} />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>CVC</label>
+                    <input type="text" placeholder="123" style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', border: '1px solid #cbd5e1', fontSize: '0.95rem' }} />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {paymentMethod === 'apple_pay' && (
+              <div style={{ padding: '40px 0', textAlign: 'center', backgroundColor: '#f8fafc', borderRadius: '16px', marginBottom: '24px' }}>
+                <div style={{ fontSize: '3rem', marginBottom: '10px' }}>🍏</div>
+                <div style={{ fontWeight: 600, color: '#0f172a' }}>Double-click side button to pay</div>
+              </div>
+            )}
+
+            {paymentMethod === 'cash' && (
+              <div style={{ padding: '24px', textAlign: 'center', backgroundColor: '#f0fdf4', borderRadius: '16px', marginBottom: '24px', border: '1px solid #dcfce7' }}>
+                <div style={{ fontSize: '2rem', marginBottom: '10px' }}>💵</div>
+                <div style={{ fontWeight: 600, color: '#15803d' }}>Pay ${grandTotal.toFixed(2)} in cash to your cleaner after the service is complete.</div>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={finalizeBooking}
+              disabled={isProcessingPayment}
+              className="btn btn-primary"
+              style={{
+                width: '100%',
+                padding: '16px',
+                fontSize: '1.05rem',
+                borderRadius: '9999px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '10px',
+                opacity: isProcessingPayment ? 0.7 : 1
+              }}
+            >
+              {isProcessingPayment ? (
+                <span>Processing...</span>
+              ) : (
+                <>
+                  <span>Confirm & Pay ${grandTotal.toFixed(2)}</span>
+                  <CheckCircle2 size={20} />
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

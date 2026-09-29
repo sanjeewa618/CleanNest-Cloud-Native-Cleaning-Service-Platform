@@ -2,7 +2,8 @@
 
 import React from 'react';
 import { HeroSection } from '@/components/customer/HeroSection';
-import { SpecialOfferBanner } from '@/components/customer/SpecialOfferBanner';
+import { AdvertisementBanner } from '@/components/customer/AdvertisementBanner';
+import { AboutUsSection } from '@/components/customer/AboutUsSection';
 import { PopularServices } from '@/components/customer/PopularServices';
 import { FeaturedOffers } from '@/components/customer/FeaturedOffers';
 import { HowItWorks } from '@/components/customer/HowItWorks';
@@ -16,8 +17,13 @@ export default function HomePage() {
       <HeroSection />
 
       <div className="container">
-        {/* Special Offer Banner (20% Off) matching Screen 2 */}
-        <SpecialOfferBanner />
+        {/* Advertisement Scrolling Banner */}
+        <div style={{ marginTop: '40px' }}>
+          <AdvertisementBanner />
+        </div>
+
+        {/* About Us Section */}
+        <AboutUsSection />
 
         {/* Popular Services category grid matching Screen 2 */}
         <PopularServices />
