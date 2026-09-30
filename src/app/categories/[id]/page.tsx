@@ -31,15 +31,29 @@ export default function CategoryCleanersPage() {
   return (
     <div style={{ backgroundColor: '#f8fafc', minHeight: '100vh', paddingBottom: '80px' }}>
       {/* Header Banner */}
-      <div style={{ backgroundColor: '#15803d', color: '#ffffff', padding: '60px 0 40px 0' }}>
-        <div className="container">
+      <div style={{
+        backgroundColor: '#15803d',
+        backgroundImage: `url(${service.image})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        position: 'relative',
+        color: '#ffffff',
+        padding: '60px 0 40px 0',
+      }}>
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'linear-gradient(90deg, rgba(20,83,45,0.6) 0%, rgba(21,128,61,0) 100%)',
+          zIndex: 0
+        }} />
+        <div className="container" style={{ position: 'relative', zIndex: 1 }}>
           <Link
             href="/"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
-              color: '#dcfce7',
+              color: '#ffffff',
               fontSize: '0.875rem',
               fontWeight: 600,
               marginBottom: '20px'
@@ -48,10 +62,10 @@ export default function CategoryCleanersPage() {
             <ArrowLeft size={16} />
             <span>Back to Home</span>
           </Link>
-          <h1 style={{ fontSize: '2.5rem', fontWeight: 800, marginBottom: '10px' }}>
+          <h1 style={{ fontSize: '2.5rem', fontWeight: 800, marginBottom: '10px', color: '#ffffff' }}>
             {service.name} Professionals
           </h1>
-          <p style={{ fontSize: '1.1rem', color: '#dcfce7', maxWidth: '600px' }}>
+          <p style={{ fontSize: '1.1rem', color: '#f0fdf4', maxWidth: '600px' }}>
             Select one of our top-rated {service.name.toLowerCase()} experts to see their details and book a service.
           </p>
         </div>

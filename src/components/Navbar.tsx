@@ -40,9 +40,7 @@ export const Navbar: React.FC = () => {
   const [activeSection, setActiveSection] = useState('home');
   const pathname = usePathname();
 
-  if (pathname === '/login' || pathname === '/register') {
-    return null;
-  }
+
 
   useEffect(() => {
     const handleScroll = () => {
@@ -78,6 +76,10 @@ export const Navbar: React.FC = () => {
   ).length;
 
   const unreadNotifsCount = notifications.filter((n) => !n.read).length;
+
+  if (pathname === '/login' || pathname === '/register') {
+    return null;
+  }
 
   return (
     <>

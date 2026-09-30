@@ -72,17 +72,17 @@ export default function LoginPage() {
         <div style={{
           position: 'absolute',
           inset: 0,
-          background: 'linear-gradient(180deg, rgba(21,128,61,0.05) 0%, rgba(20,83,45,0.75) 100%)',
+          background: 'linear-gradient(180deg, rgba(21,128,61,0) 0%, rgba(20,83,45,0.6) 100%)',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'flex-end',
           padding: '60px',
           color: '#fff'
         }}>
-          <h2 style={{ fontSize: '3rem', fontWeight: 800, marginBottom: '16px', lineHeight: 1.1, color: '#ffffff' }}>
+          <h2 style={{ fontSize: '3rem', fontWeight: 800, marginBottom: '16px', lineHeight: 1.1, color: '#ffffff', textShadow: '0 2px 10px rgba(0,0,0,0.3)' }}>
             Sparkling Clean.<br/>Every Time.
           </h2>
-          <p style={{ fontSize: '1.2rem', opacity: 0.9, maxWidth: '400px', color: '#ffffff' }}>
+          <p style={{ fontSize: '1.2rem', opacity: 0.9, maxWidth: '400px', color: '#ffffff', textShadow: '0 1px 5px rgba(0,0,0,0.3)' }}>
             Join thousands of satisfied customers who trust CleanNest with their homes.
           </p>
         </div>
