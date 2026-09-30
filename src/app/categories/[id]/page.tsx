@@ -49,6 +49,7 @@ export default function CategoryCleanersPage() {
         <div className="container" style={{ position: 'relative', zIndex: 1 }}>
           <Link
             href="/"
+            className="scroll-animate fade-up delay-100"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -62,10 +63,10 @@ export default function CategoryCleanersPage() {
             <ArrowLeft size={16} />
             <span>Back to Home</span>
           </Link>
-          <h1 style={{ fontSize: '2.5rem', fontWeight: 800, marginBottom: '10px', color: '#ffffff' }}>
+          <h1 className="scroll-animate fade-up delay-200" style={{ fontSize: '2.5rem', fontWeight: 800, marginBottom: '10px', color: '#ffffff' }}>
             {service.name} Professionals
           </h1>
-          <p style={{ fontSize: '1.1rem', color: '#f0fdf4', maxWidth: '600px' }}>
+          <p className="scroll-animate fade-up delay-300" style={{ fontSize: '1.1rem', color: '#f0fdf4', maxWidth: '600px' }}>
             Select one of our top-rated {service.name.toLowerCase()} experts to see their details and book a service.
           </p>
         </div>
@@ -88,8 +89,9 @@ export default function CategoryCleanersPage() {
             gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
             gap: '24px'
           }}>
-            {availableCleaners.map((cleaner) => (
+            {availableCleaners.map((cleaner, idx) => (
               <div
+                className={`scroll-animate fade-up delay-${(idx + 1) * 100}`}
                 key={cleaner.id}
                 style={{
                   backgroundColor: '#ffffff',

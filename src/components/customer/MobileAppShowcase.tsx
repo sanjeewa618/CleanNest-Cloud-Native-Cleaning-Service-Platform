@@ -15,7 +15,7 @@ export const MobileAppShowcase: React.FC = () => {
       overflow: 'hidden'
     }}>
       <div className="container" style={{ position: 'relative', zIndex: 10 }}>
-        <div style={{ textAlign: 'center', maxWidth: '720px', margin: '0 auto 60px auto' }}>
+        <div className="scroll-animate fade-up" style={{ textAlign: 'center', maxWidth: '720px', margin: '0 auto 60px auto' }}>
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -53,7 +53,7 @@ export const MobileAppShowcase: React.FC = () => {
           alignItems: 'stretch'
         }}>
           {/* Feature 1 */}
-          <div style={{
+          <div className="scroll-animate fade-up delay-100" style={{
             backgroundColor: '#ffffff',
             borderRadius: '24px',
             boxShadow: '0 10px 40px -10px rgba(21, 128, 61, 0.1)',
@@ -90,7 +90,7 @@ export const MobileAppShowcase: React.FC = () => {
           </div>
 
           {/* Feature 2 */}
-          <div style={{
+          <div className="scroll-animate fade-up delay-200" style={{
             backgroundColor: '#ffffff',
             borderRadius: '24px',
             boxShadow: '0 10px 40px -10px rgba(21, 128, 61, 0.1)',
@@ -127,7 +127,7 @@ export const MobileAppShowcase: React.FC = () => {
           </div>
 
           {/* Feature 3 */}
-          <div style={{
+          <div className="scroll-animate fade-up delay-300" style={{
             backgroundColor: '#ffffff',
             borderRadius: '24px',
             boxShadow: '0 10px 40px -10px rgba(21, 128, 61, 0.1)',

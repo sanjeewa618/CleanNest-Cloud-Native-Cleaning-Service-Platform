@@ -35,7 +35,7 @@ export const HowItWorks: React.FC = () => {
       margin: '80px 0',
       padding: '40px 0'
     }}>
-      <div style={{ textAlign: 'center', maxWidth: '700px', margin: '0 auto 64px auto' }}>
+      <div className="scroll-animate fade-up" style={{ textAlign: 'center', maxWidth: '700px', margin: '0 auto 64px auto' }}>
         <div style={{
           display: 'inline-block',
           color: '#facc15',
@@ -67,8 +67,9 @@ export const HowItWorks: React.FC = () => {
         gap: '40px',
         padding: '0 20px'
       }}>
-        {steps.map((st) => (
+        {steps.map((st, idx) => (
           <div
+            className={`scroll-animate fade-up delay-${(idx + 1) * 100}`}
             key={st.step}
             style={{
               display: 'flex',

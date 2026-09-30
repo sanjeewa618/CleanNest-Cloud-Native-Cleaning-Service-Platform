@@ -30,7 +30,7 @@ export const Footer: React.FC = () => {
           borderBottom: '1px solid #1e293b',
           marginBottom: '48px'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div className="scroll-animate fade-up delay-100" style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
             <div style={{
               width: '46px',
               height: '46px',
@@ -49,7 +49,7 @@ export const Footer: React.FC = () => {
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div className="scroll-animate fade-up delay-200" style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
             <div style={{
               width: '46px',
               height: '46px',
@@ -68,7 +68,7 @@ export const Footer: React.FC = () => {
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div className="scroll-animate fade-up delay-300" style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
             <div style={{
               width: '46px',
               height: '46px',
@@ -96,7 +96,7 @@ export const Footer: React.FC = () => {
           paddingBottom: '48px'
         }}>
           {/* Col 1: About */}
-          <div>
+          <div className="scroll-animate fade-up delay-100">
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
               <div style={{
                 width: '36px',
@@ -133,7 +133,7 @@ export const Footer: React.FC = () => {
           </div>
 
           {/* Col 2: Services */}
-          <div>
+          <div className="scroll-animate fade-up delay-200">
             <h4 style={{ color: '#ffffff', fontSize: '1rem', fontWeight: 700, marginBottom: '18px' }}>
               Our Services
             </h4>
@@ -148,7 +148,7 @@ export const Footer: React.FC = () => {
           </div>
 
           {/* Col 3: Actors & Portals */}
-          <div>
+          <div className="scroll-animate fade-up delay-300">
             <h4 style={{ color: '#ffffff', fontSize: '1rem', fontWeight: 700, marginBottom: '18px' }}>
               CleanNest Portals
             </h4>
@@ -162,7 +162,7 @@ export const Footer: React.FC = () => {
           </div>
 
           {/* Col 4: Trust & Guarantee */}
-          <div>
+          <div className="scroll-animate fade-up delay-400">
             <h4 style={{ color: '#ffffff', fontSize: '1rem', fontWeight: 700, marginBottom: '18px' }}>
               CleanNest Guarantee
             </h4>

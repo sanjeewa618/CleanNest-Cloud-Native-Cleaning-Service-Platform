@@ -59,7 +59,7 @@ export const AdvertisementBanner: React.FC = () => {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div style={{ position: 'relative', width: '100%', maxWidth: '1200px', margin: '0 auto', minHeight: '380px', overflow: 'hidden', borderRadius: '28px' }}>
+      <div className="scroll-animate fade-up delay-200" style={{ position: 'relative', width: '100%', maxWidth: '1200px', margin: '0 auto', minHeight: '380px', overflow: 'hidden', borderRadius: '28px' }}>
         <div style={{
           display: 'flex',
           width: `${advertisements.length * 100}%`,
@@ -97,6 +97,7 @@ export const AdvertisementBanner: React.FC = () => {
                   alignItems: 'center',
                   gap: '6px',
                   backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  color: '#ffffff',
                   padding: '6px 12px',
                   borderRadius: '9999px',
                   fontSize: '0.8rem',

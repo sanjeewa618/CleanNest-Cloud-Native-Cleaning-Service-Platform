@@ -9,7 +9,7 @@ export const Testimonials: React.FC = () => {
 
   return (
     <section style={{ margin: '64px 0' }}>
-      <div style={{ textAlign: 'center', maxWidth: '640px', margin: '0 auto 40px auto' }}>
+      <div className="scroll-animate fade-up" style={{ textAlign: 'center', maxWidth: '640px', margin: '0 auto 40px auto' }}>
         <div style={{
           display: 'inline-flex',
           alignItems: 'center',
@@ -43,8 +43,9 @@ export const Testimonials: React.FC = () => {
         gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
         gap: '24px'
       }}>
-        {reviews.map((rev) => (
+        {reviews.map((rev, idx) => (
           <div
+            className={`scroll-animate fade-up delay-${(idx + 1) * 100}`}
             key={rev.id}
             style={{
               backgroundColor: '#ffffff',

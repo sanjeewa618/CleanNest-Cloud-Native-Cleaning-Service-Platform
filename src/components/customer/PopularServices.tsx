@@ -38,7 +38,7 @@ export const PopularServices: React.FC = () => {
     <section id="popular-services" style={{ padding: '80px 0', backgroundColor: '#f8fafc', backgroundImage: 'radial-gradient(#e2e8f0 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
       <div className="container">
         {/* Headings */}
-        <div style={{ textAlign: 'center', marginBottom: '60px' }}>
+        <div className="scroll-animate fade-up" style={{ textAlign: 'center', marginBottom: '60px' }}>
           <h4 style={{
             fontSize: '1.2rem',
             fontWeight: 700,
@@ -72,11 +72,11 @@ export const PopularServices: React.FC = () => {
           
           {/* Left Column (3 Services) */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
-            {displayServices.slice(0, 3).map((service) => (
+            {displayServices.slice(0, 3).map((service, idx) => (
               <Link 
                 href={`/categories/${service.slug}`} 
                 key={service.id}
-                className="feature-card-link"
+                className={`feature-card-link scroll-animate fade-up delay-${(idx + 1) * 100}`}
                 style={{
                   display: 'flex',
                   backgroundColor: '#ffffff',
@@ -160,11 +160,11 @@ export const PopularServices: React.FC = () => {
 
           {/* Right Column (3 Services) */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
-            {displayServices.slice(3, 6).map((service) => (
+            {displayServices.slice(3, 6).map((service, idx) => (
               <Link 
                 href={`/categories/${service.slug}`} 
                 key={service.id}
-                className="feature-card-link"
+                className={`feature-card-link scroll-animate fade-up delay-${(idx + 1) * 100}`}
                 style={{
                   display: 'flex',
                   backgroundColor: '#ffffff',

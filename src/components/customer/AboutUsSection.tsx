@@ -4,7 +4,7 @@ import React from 'react';
 
 export const AboutUsSection: React.FC = () => {
   return (
-    <section style={{ padding: '80px 0', overflow: 'hidden' }}>
+    <section id="about-us" style={{ padding: '80px 0', overflow: 'hidden' }}>
       <div className="container">
         <div style={{
           display: 'grid',
@@ -13,7 +13,7 @@ export const AboutUsSection: React.FC = () => {
           alignItems: 'center'
         }}>
           {/* Left Column - Image with Badge */}
-          <div style={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
+          <div className="scroll-animate fade-right delay-100" style={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
             <div style={{
               position: 'relative',
               width: '100%',
@@ -53,7 +53,7 @@ export const AboutUsSection: React.FC = () => {
           </div>
 
           {/* Right Column - Text Content */}
-          <div>
+          <div className="scroll-animate fade-left delay-200">
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
               <div style={{ fontSize: '4.5rem', fontWeight: 900, color: '#15803d', lineHeight: 1, letterSpacing: '-0.05em' }}>
                 15

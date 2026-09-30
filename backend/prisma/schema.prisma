@@ -1,0 +1,67 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  phone     String?
+  role      Role     @default(CUSTOMER)
+  
+  // Cleaner specific fields
+  category  String?  // e.g. "Home Cleaning"
+  avatar    String?
+  rating    Float?   @default(5.0)
+  jobs      Int?     @default(0)
+  
+  // Relationships
+  bookingsAsCustomer Booking[] @relation("CustomerBookings")
+  bookingsAsCleaner  Booking[] @relation("CleanerBookings")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Booking {
+  id          String   @id @default(uuid())
+  serviceType String   // e.g. "Home Cleaning", "Sofa Cleaning"
+  date        DateTime
+  timeSlot    String
+  status      BookingStatus @default(PENDING)
+  price       Float
+  
+  // Relationships
+  customerId  String
+  customer    User     @relation("CustomerBookings", fields: [customerId], references: [id])
+  
+  cleanerId   String?
+  cleaner     User?    @relation("CleanerBookings", fields: [cleanerId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum Role {
+  CUSTOMER
+  CLEANER
+  ADMIN
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  ON_THE_WAY
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}

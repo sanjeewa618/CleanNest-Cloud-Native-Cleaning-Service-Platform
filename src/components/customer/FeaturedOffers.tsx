@@ -41,7 +41,7 @@ export const FeaturedOffers: React.FC = () => {
   return (
     <section style={{ margin: '48px 0' }}>
       {/* Header - Matches Screen 2 */}
-      <div style={{
+      <div className="scroll-animate fade-up" style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -84,8 +84,9 @@ export const FeaturedOffers: React.FC = () => {
         gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
         gap: '24px'
       }}>
-        {featured.map((item) => (
+        {featured.map((item, idx) => (
           <div
+            className={`featured-offer-card scroll-animate fade-up delay-${(idx + 1) * 100}`}
             key={item.id}
             style={{
               backgroundColor: '#ffffff',
@@ -97,7 +98,6 @@ export const FeaturedOffers: React.FC = () => {
               display: 'flex',
               flexDirection: 'column'
             }}
-            className="featured-offer-card"
           >
             {/* Image Box */}
             <div style={{ position: 'relative', height: '190px', width: '100%', overflow: 'hidden' }}>

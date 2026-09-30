@@ -327,3 +327,39 @@ input:focus, textarea:focus, select:focus {
     display: block;
   }
 }
+
+/* Scroll Animations */
+.scroll-animate {
+  opacity: 0;
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.scroll-animate.fade-up {
+  transform: translateY(40px);
+}
+
+.scroll-animate.fade-down {
+  transform: translateY(-40px);
+}
+
+.scroll-animate.fade-left {
+  transform: translateX(-40px);
+}
+
+.scroll-animate.fade-right {
+  transform: translateX(40px);
+}
+
+.scroll-animate.is-visible {
+  opacity: 1;
+  transform: translate(0, 0);
+}
+
+/* Stagger delays */
+.delay-100 { transition-delay: 100ms; }
+.delay-200 { transition-delay: 200ms; }
+.delay-300 { transition-delay: 300ms; }
+.delay-400 { transition-delay: 400ms; }
+.delay-500 { transition-delay: 500ms; }
+

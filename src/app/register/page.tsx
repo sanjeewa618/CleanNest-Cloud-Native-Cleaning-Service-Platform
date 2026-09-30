@@ -10,10 +10,11 @@ export default function RegisterPage() {
   const router = useRouter();
   const { setRole, setCurrentUser } = useCleanNest();
   const [selectedRole, setSelectedRole] = useState<'customer' | 'cleaner'>('customer');
-  const [fullName, setFullName] = useState('Kasun Perera');
-  const [email, setEmail] = useState('kasun@example.com');
-  const [phone, setPhone] = useState('+1 (555) 789-0123');
-  const [password, setPassword] = useState('password123');
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [serviceCategory, setServiceCategory] = useState('Home Cleaning');
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,10 +98,10 @@ export default function RegisterPage() {
           padding: '60px',
           color: '#fff'
         }}>
-          <h2 style={{ fontSize: '3rem', fontWeight: 800, marginBottom: '16px', lineHeight: 1.1, color: '#ffffff', textShadow: '0 2px 10px rgba(0,0,0,0.3)' }}>
+          <h2 className="scroll-animate fade-up delay-100" style={{ fontSize: '3rem', fontWeight: 800, marginBottom: '16px', lineHeight: 1.1, color: '#ffffff', textShadow: '0 2px 10px rgba(0,0,0,0.3)' }}>
             Join the CleanNest<br/>Community.
           </h2>
-          <p style={{ fontSize: '1.2rem', opacity: 0.9, maxWidth: '400px', color: '#ffffff', textShadow: '0 1px 5px rgba(0,0,0,0.3)' }}>
+          <p className="scroll-animate fade-up delay-200" style={{ fontSize: '1.2rem', opacity: 0.9, maxWidth: '400px', color: '#ffffff', textShadow: '0 1px 5px rgba(0,0,0,0.3)' }}>
             Experience the best on-demand cleaning service platform, designed for your convenience.
           </p>
         </div>
@@ -121,7 +122,7 @@ export default function RegisterPage() {
           width: '100%'
         }}>
           {/* Heading */}
-          <div style={{ marginBottom: '28px' }}>
+          <div className="scroll-animate fade-up delay-100" style={{ marginBottom: '28px' }}>
             <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', marginBottom: '8px' }}>
               Create Account
             </h1>
@@ -131,7 +132,7 @@ export default function RegisterPage() {
           </div>
 
           {/* Account Type Toggle */}
-          <div style={{
+          <div className="scroll-animate fade-up delay-200" style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',
             gap: '8px',
@@ -161,7 +162,7 @@ export default function RegisterPage() {
               }}
             >
               <User size={16} />
-              <span>I Need Cleaning</span>
+              <span>I am a Customer</span>
             </button>
 
             <button
@@ -185,11 +186,11 @@ export default function RegisterPage() {
               }}
             >
               <Sparkles size={16} />
-              <span>I Am a Cleaner Pro</span>
+              <span>I am a Cleaner</span>
             </button>
           </div>
 
-          <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <form className="scroll-animate fade-up delay-300" onSubmit={handleRegister} autoComplete="off" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div>
               <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
                 Full Name
@@ -199,6 +200,8 @@ export default function RegisterPage() {
                 required
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
+                autoComplete="off"
+                placeholder="Kasun Perera"
                 style={{
                   width: '100%',
                   padding: '12px 14px',
@@ -220,6 +223,8 @@ export default function RegisterPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                autoComplete="new-password"
+                placeholder="cashier123@gmail.com"
                 style={{
                   width: '100%',
                   padding: '12px 14px',
@@ -241,6 +246,8 @@ export default function RegisterPage() {
                 required
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
+                autoComplete="off"
+                placeholder="+1 (555) 789-0123"
                 style={{
                   width: '100%',
                   padding: '12px 14px',
@@ -262,6 +269,10 @@ export default function RegisterPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                autoComplete="new-password"
+                placeholder="password123"
+                pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[\W_]).{8,}"
+                title="Password must be at least 8 characters long and include one uppercase letter, one lowercase letter, one number, and one special character."
                 style={{
                   width: '100%',
                   padding: '12px 14px',
@@ -272,7 +283,39 @@ export default function RegisterPage() {
                   outline: 'none'
                 }}
               />
+              <div style={{ marginTop: '6px', fontSize: '0.75rem', color: '#64748b' }}>
+                Must be at least 8 characters, include uppercase, lowercase, number, and special character.
+              </div>
             </div>
+
+            {selectedRole === 'cleaner' && (
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                  Service Category
+                </label>
+                <select
+                  value={serviceCategory}
+                  onChange={(e) => setServiceCategory(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    borderRadius: '12px',
+                    fontSize: '0.95rem',
+                    border: '1px solid #e2e8f0',
+                    backgroundColor: '#f8fafc',
+                    outline: 'none',
+                    color: '#334155'
+                  }}
+                >
+                  <option value="Home Cleaning">Home Cleaning</option>
+                  <option value="Garden Cleaning">Garden Cleaning</option>
+                  <option value="Sofa Cleaning">Sofa Cleaning</option>
+                  <option value="Kitchen Cleaning">Kitchen Cleaning</option>
+                  <option value="Deep Cleaning">Deep Cleaning</option>
+                  <option value="Window Cleaning">Window Cleaning</option>
+                </select>
+              </div>
+            )}
 
             <button
               type="submit"

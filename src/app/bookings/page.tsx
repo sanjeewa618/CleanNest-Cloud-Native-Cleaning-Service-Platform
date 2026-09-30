@@ -163,7 +163,7 @@ export default function CustomerBookingsPage() {
     <div style={{ backgroundColor: '#f8fafc', padding: '36px 0 80px 0' }}>
       <div className="container">
         {/* Header */}
-        <div style={{
+        <div className="scroll-animate fade-up delay-100" style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -190,7 +190,7 @@ export default function CustomerBookingsPage() {
         </div>
 
         {/* Tab Filters */}
-        <div style={{
+        <div className="scroll-animate fade-up delay-200" style={{
           display: 'inline-flex',
           backgroundColor: '#ffffff',
           padding: '6px',
@@ -220,7 +220,7 @@ export default function CustomerBookingsPage() {
 
         {/* Bookings List */}
         {filteredBookings.length === 0 ? (
-          <div style={{
+          <div className="scroll-animate fade-up delay-300" style={{
             backgroundColor: '#ffffff',
             borderRadius: '24px',
             padding: '60px 20px',
@@ -240,8 +240,9 @@ export default function CustomerBookingsPage() {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            {filteredBookings.map((b) => (
+            {filteredBookings.map((b, idx) => (
               <div
+                className={`scroll-animate fade-up delay-${(idx + 1) * 100}`}
                 key={b.id}
                 style={{
                   backgroundColor: '#ffffff',

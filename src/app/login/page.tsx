@@ -9,8 +9,8 @@ import { ArrowRight, Lock, Mail, ArrowLeft } from 'lucide-react';
 export default function LoginPage() {
   const router = useRouter();
   const { setRole } = useCleanNest();
-  const [email, setEmail] = useState('alex.m@example.com');
-  const [password, setPassword] = useState('••••••••••••');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,10 +79,10 @@ export default function LoginPage() {
           padding: '60px',
           color: '#fff'
         }}>
-          <h2 style={{ fontSize: '3rem', fontWeight: 800, marginBottom: '16px', lineHeight: 1.1, color: '#ffffff', textShadow: '0 2px 10px rgba(0,0,0,0.3)' }}>
+          <h2 className="scroll-animate fade-up delay-100" style={{ fontSize: '3rem', fontWeight: 800, marginBottom: '16px', lineHeight: 1.1, color: '#ffffff', textShadow: '0 2px 10px rgba(0,0,0,0.3)' }}>
             Sparkling Clean.<br/>Every Time.
           </h2>
-          <p style={{ fontSize: '1.2rem', opacity: 0.9, maxWidth: '400px', color: '#ffffff', textShadow: '0 1px 5px rgba(0,0,0,0.3)' }}>
+          <p className="scroll-animate fade-up delay-200" style={{ fontSize: '1.2rem', opacity: 0.9, maxWidth: '400px', color: '#ffffff', textShadow: '0 1px 5px rgba(0,0,0,0.3)' }}>
             Join thousands of satisfied customers who trust CleanNest with their homes.
           </p>
         </div>
@@ -102,7 +102,7 @@ export default function LoginPage() {
           width: '100%'
         }}>
           {/* Brand Icon & Heading */}
-          <div style={{ marginBottom: '32px' }}>
+          <div className="scroll-animate fade-up delay-100" style={{ marginBottom: '32px' }}>
             <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', marginBottom: '8px' }}>
               Welcome back
             </h1>
@@ -112,7 +112,7 @@ export default function LoginPage() {
           </div>
 
           {/* Login Form */}
-          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <form className="scroll-animate fade-up delay-200" onSubmit={handleLogin} autoComplete="off" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
               <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
                 Email Address
@@ -130,6 +130,8 @@ export default function LoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="new-password"
+                  placeholder="cashier123@gmail.com"
                   style={{
                     width: '100%',
                     padding: '12px 10px',
@@ -159,6 +161,10 @@ export default function LoginPage() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="new-password"
+                  placeholder="••••••••••••"
+                  pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[\W_]).{8,}"
+                  title="Password must be at least 8 characters long and include one uppercase letter, one lowercase letter, one number, and one special character."
                   style={{
                     width: '100%',
                     padding: '12px 10px',
@@ -168,6 +174,9 @@ export default function LoginPage() {
                     outline: 'none'
                   }}
                 />
+              </div>
+              <div style={{ marginTop: '6px', fontSize: '0.75rem', color: '#64748b' }}>
+                Must be at least 8 characters, include uppercase, lowercase, number, and special character.
               </div>
             </div>
 

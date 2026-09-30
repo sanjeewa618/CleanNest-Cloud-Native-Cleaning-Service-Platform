@@ -31,7 +31,7 @@ export const HeroSection: React.FC = () => {
       display: 'flex',
       alignItems: 'center',
       overflow: 'hidden',
-      backgroundColor: '#ecfdf5' // Fallback color
+      backgroundColor: '#ecfdf5'
     }}>
       {/* Background Image on the right half */}
       <div style={{
@@ -40,9 +40,9 @@ export const HeroSection: React.FC = () => {
         right: 0,
         width: '55%',
         height: '100%',
-        backgroundImage: 'url("/images/hero_cleaner.jpg")',
+        backgroundImage: 'url("/images/hero_cleaners_group.jpg")',
         backgroundSize: 'cover',
-        backgroundPosition: 'left center', // The person is on the left side of the photo, so align it here
+        backgroundPosition: 'right center',
         zIndex: 0
       }} />
 
@@ -64,7 +64,7 @@ export const HeroSection: React.FC = () => {
           {/* Left Column: Headlines & Instant Booking Widget */}
           <div>
             {/* Top Rating Pill */}
-            <div style={{
+            <div className="scroll-animate fade-up" style={{
               display: 'inline-flex',
               alignItems: 'center',
               gap: '8px',
@@ -86,8 +86,8 @@ export const HeroSection: React.FC = () => {
               <span style={{ fontSize: '0.8125rem', color: '#64748b' }}>(2,340+ Verified Reviews)</span>
             </div>
 
-            {/* Main Headline - Matches Screen 1 text */}
-            <h1 style={{
+            {/* Main Headline */}
+            <h1 className="scroll-animate fade-up delay-100" style={{
               fontFamily: 'var(--font-display)',
               fontSize: 'clamp(2.4rem, 4.5vw, 3.6rem)',
               fontWeight: 800,
@@ -120,8 +120,8 @@ export const HeroSection: React.FC = () => {
               </span>
             </h1>
 
-            {/* Subhead - Matches Screen 1 text */}
-            <p style={{
+            {/* Subhead */}
+            <p className="scroll-animate fade-up delay-200" style={{
               fontSize: '1.15rem',
               color: '#475569',
               lineHeight: 1.6,
@@ -132,7 +132,7 @@ export const HeroSection: React.FC = () => {
             </p>
 
             {/* Instant Booking Quick-Card */}
-            <div style={{
+            <div className="scroll-animate fade-up delay-300" style={{
               backgroundColor: '#ffffff',
               borderRadius: '24px',
               padding: '24px',
@@ -223,7 +223,7 @@ export const HeroSection: React.FC = () => {
             </div>
 
             {/* Feature Guarantees */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px' }}>
+            <div className="scroll-animate fade-up delay-400" style={{ display: 'flex', flexWrap: 'wrap', gap: '20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.875rem', color: '#334155', fontWeight: 600 }}>
                 <Clock size={18} color="#15803d" />
                 <span>Instant Confirmation</span>

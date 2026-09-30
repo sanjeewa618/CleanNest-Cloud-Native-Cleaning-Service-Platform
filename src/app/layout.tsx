@@ -4,6 +4,7 @@ import { CleanNestProvider } from '@/context/CleanNestContext';
 import { RoleSwitcherBanner } from '@/components/RoleSwitcherBanner';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
+import ScrollAnimationProvider from '@/components/ScrollAnimationProvider';
 
 export const metadata: Metadata = {
   title: 'CleanNest – On-Demand Cleaning Service Booking Platform',
@@ -27,6 +28,7 @@ export default function RootLayout({
       </head>
       <body>
         <CleanNestProvider>
+          <ScrollAnimationProvider />
           <RoleSwitcherBanner />
           <Navbar />
           <main style={{ minHeight: 'calc(100vh - 200px)' }}>
