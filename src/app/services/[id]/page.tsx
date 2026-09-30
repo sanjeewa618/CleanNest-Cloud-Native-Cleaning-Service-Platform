@@ -31,9 +31,16 @@ export default function ServiceDetailsPage() {
   const { services, cleaners, reviews, setDraftBooking } = useCleanNest();
 
   const preselectedCleanerId = searchParams?.get('cleaner');
+  const selectedCleaner = preselectedCleanerId ? cleaners.find(c => c.id === preselectedCleanerId) : null;
 
   const serviceSlug = (params?.id as string) || 'home-cleaning';
   const service = services.find((s) => s.slug === serviceSlug) || services[0];
+
+  const activeCleaners = cleaners.filter(c => c.status === 'ACTIVE' || c.status === 'active');
+  const categoryCleaners = activeCleaners.filter(c => c.specialties?.includes(service.name));
+  const displayCleaners = categoryCleaners.length > 0 ? categoryCleaners : activeCleaners.slice(0, 2);
+
+  const bannerImage = selectedCleaner?.avatar || displayCleaners[0]?.avatar || service.image;
 
   const [selectedPackageId, setSelectedPackageId] = useState(
     service.packages.find((p) => p.recommended)?.id || service.packages[0]?.id || ''
@@ -44,10 +51,6 @@ export default function ServiceDetailsPage() {
 
   const selectedPackage = service.packages.find((p) => p.id === selectedPackageId) || service.packages[0];
   const totalPrice = (selectedPackage ? selectedPackage.pricePerHour : service.basePrice) * selectedHours;
-
-  const activeCleaners = cleaners.filter(c => c.status === 'ACTIVE' || c.status === 'active');
-  const categoryCleaners = activeCleaners.filter(c => c.specialties?.includes(service.name));
-  const displayCleaners = categoryCleaners.length > 0 ? categoryCleaners : activeCleaners.slice(0, 2);
 
   const handleShare = () => {
     if (typeof window !== 'undefined') {
@@ -140,7 +143,7 @@ export default function ServiceDetailsPage() {
               backgroundColor: '#e2e8f0'
             }}>
               <img
-                src={service.image}
+                src={bannerImage}
                 alt={service.name}
                 style={{
                   width: '100%',
