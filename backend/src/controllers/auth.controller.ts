@@ -50,6 +50,7 @@ export const register = async (req: Request, res: Response) => {
         id: user.id,
         name: user.name,
         email: user.email,
+        phone: user.phone,
         role: user.role,
         avatar: user.avatar,
         status: user.status
@@ -116,6 +117,7 @@ export const login = async (req: Request, res: Response) => {
         id: user.id,
         name: user.name,
         email: user.email,
+        phone: user.phone,
         role: user.role,
         avatar: user.avatar,
         status: user.status

@@ -12,6 +12,8 @@ export const getCleaners = async (req: Request, res: Response) => {
       select: {
         id: true,
         name: true,
+        email: true,
+        phone: true,
         avatar: true,
         category: true,
         rating: true,
@@ -36,6 +38,8 @@ export const getCleanerById = async (req: Request, res: Response) => {
       select: {
         id: true,
         name: true,
+        email: true,
+        phone: true,
         avatar: true,
         category: true,
         rating: true,
@@ -74,5 +78,28 @@ export const updateCleanerStatus = async (req: Request, res: Response) => {
     res.json(cleaner);
   } catch (error) {
     res.status(500).json({ error: 'Failed to update cleaner status' });
+  }
+};
+
+export const updateCleanerProfile = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { name, email, phone, avatar } = req.body;
+    
+    const updateData: any = {};
+    if (name) updateData.name = name;
+    if (email) updateData.email = email;
+    if (phone) updateData.phone = phone;
+    if (avatar) updateData.avatar = avatar;
+    
+    const cleaner = await prisma.user.update({
+      where: { id, role: 'CLEANER' },
+      data: updateData
+    });
+    
+    res.json(cleaner);
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    res.status(500).json({ error: 'Failed to update cleaner profile' });
   }
 };

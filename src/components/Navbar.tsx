@@ -76,7 +76,7 @@ export const Navbar: React.FC = () => {
 
   const unreadNotifsCount = notifications.filter((n) => !n.read).length;
 
-  if (pathname === '/login' || pathname === '/register' || pathname?.startsWith('/admin')) {
+  if (pathname === '/login' || pathname === '/register' || pathname?.startsWith('/admin') || pathname?.startsWith('/cleaner')) {
     return null;
   }
 

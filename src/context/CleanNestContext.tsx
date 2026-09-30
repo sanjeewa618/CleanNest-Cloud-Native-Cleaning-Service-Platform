@@ -57,6 +57,7 @@ interface CleanNestContextType {
   // Cleaner operations
   toggleCleanerOnline: (cleanerId: string) => void;
   updateCleanerServices: (cleanerId: string, specialties: string[]) => void;
+  updateCleanerProfile: (cleanerId: string, data: Partial<Cleaner>) => void;
   // Admin operations
   updateCleanerStatus: (cleanerId: string, status: 'ACTIVE' | 'PENDING' | 'REJECTED' | 'SUSPENDED') => void;
   updateServicePackagePrice: (serviceId: string, packageId: string, newPrice: number) => void;
@@ -65,6 +66,7 @@ interface CleanNestContextType {
   draftBooking: Partial<Booking> | null;
   setDraftBooking: React.Dispatch<React.SetStateAction<Partial<Booking> | null>>;
   logout: () => void;
+  isInitialized: boolean;
 }
 
 const DEFAULT_USERS: Record<UserRole, UserProfile> = {
@@ -106,6 +108,7 @@ export const CleanNestProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [reviews, setReviews] = useState<CustomerReview[]>(INITIAL_REVIEWS);
   const [draftBooking, setDraftBooking] = useState<Partial<Booking> | null>(null);
+  const [isInitialized, setIsInitialized] = useState<boolean>(false);
 
   const [notifications, setNotifications] = useState<NotificationItem[]>([
     {
@@ -183,6 +186,8 @@ export const CleanNestProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }
     } catch {
       // ignore
+    } finally {
+      setIsInitialized(true);
     }
   }, []);
 
@@ -380,6 +385,38 @@ export const CleanNestProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     );
   };
 
+  const updateCleanerProfile = async (cleanerId: string, data: Partial<Cleaner>) => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/cleaners/${cleanerId}/profile`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      
+      if (res.ok) {
+        setCleaners((prev) =>
+          prev.map((c) => (c.id === cleanerId ? { ...c, ...data } : c))
+        );
+        // Also update currentUser if it matches
+        if (currentUser.id === cleanerId) {
+          setCurrentUser(prev => {
+            const updatedUser = {
+              ...prev,
+              name: data.name || prev.name,
+              email: data.email || prev.email,
+              phone: data.phone || prev.phone,
+              avatar: data.avatar || prev.avatar
+            };
+            localStorage.setItem('cleannest_user', JSON.stringify(updatedUser));
+            return updatedUser;
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Failed to update cleaner profile', error);
+    }
+  };
+
   const updateCleanerStatus = async (cleanerId: string, status: 'ACTIVE' | 'PENDING' | 'REJECTED' | 'SUSPENDED') => {
     try {
       const res = await fetch(`http://localhost:5000/api/cleaners/${cleanerId}/status`, {
@@ -451,12 +488,14 @@ export const CleanNestProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         submitReview,
         toggleCleanerOnline,
         updateCleanerServices,
+        updateCleanerProfile,
         updateCleanerStatus,
         updateServicePackagePrice,
         addNewService,
         draftBooking,
         setDraftBooking,
-        logout
+        logout,
+        isInitialized
       }}
     >
       {children}
