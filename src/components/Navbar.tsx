@@ -40,6 +40,10 @@ export const Navbar: React.FC = () => {
   const [activeSection, setActiveSection] = useState('home');
   const pathname = usePathname();
 
+  if (pathname === '/login' || pathname === '/register') {
+    return null;
+  }
+
   useEffect(() => {
     const handleScroll = () => {
       if (pathname !== '/') {

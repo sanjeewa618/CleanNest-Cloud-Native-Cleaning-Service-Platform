@@ -317,3 +317,13 @@ input:focus, textarea:focus, select:focus {
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+.auth-left-panel {
+  display: none;
+}
+
+@media (min-width: 900px) {
+  .auth-left-panel {
+    display: block;
+  }
+}

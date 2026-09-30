@@ -1,6 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { HeroSection } from '@/components/customer/HeroSection';
 import { AdvertisementBanner } from '@/components/customer/AdvertisementBanner';
 import { AboutUsSection } from '@/components/customer/AboutUsSection';
@@ -11,6 +12,16 @@ import { MobileAppShowcase } from '@/components/customer/MobileAppShowcase';
 import { Testimonials } from '@/components/customer/Testimonials';
 
 export default function HomePage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    // Only redirect if this is the very first time they load the app in this tab
+    if (!sessionStorage.getItem('hasVisited')) {
+      sessionStorage.setItem('hasVisited', 'true');
+      router.push('/login');
+    }
+  }, [router]);
+
   return (
     <div>
       {/* Hero Section matching Screen 1 */}

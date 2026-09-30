@@ -2,9 +2,15 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { ShieldCheck, Heart, Sparkles, Phone, Mail, MapPin } from 'lucide-react';
 
 export const Footer: React.FC = () => {
+  const pathname = usePathname();
+  if (pathname === '/login' || pathname === '/register') {
+    return null;
+  }
+
   return (
     <footer style={{
       backgroundColor: '#0f172a',

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCleanNest, UserRole } from '@/context/CleanNestContext';
-import { User, Sparkles, ArrowRight, ShieldCheck, Mail, Lock, Phone } from 'lucide-react';
+import { User, Sparkles, ArrowRight, ArrowLeft } from 'lucide-react';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -39,151 +39,257 @@ export default function RegisterPage() {
   return (
     <div style={{
       backgroundColor: '#f8fafc',
-      minHeight: '80vh',
+      minHeight: '100vh',
       display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '40px 20px'
     }}>
-      <div style={{
-        maxWidth: '480px',
-        width: '100%',
+      {/* Back Button */}
+      <Link href="/" style={{
+        position: 'absolute',
+        top: '24px',
+        left: '24px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
         backgroundColor: '#ffffff',
-        borderRadius: '32px',
-        padding: '36px',
-        border: '1px solid #e2e8f0',
-        boxShadow: '0 20px 40px rgba(0, 0, 0, 0.05)'
+        padding: '10px 16px',
+        borderRadius: '9999px',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+        color: '#0f172a',
+        fontWeight: 600,
+        zIndex: 10,
+        textDecoration: 'none'
       }}>
-        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a' }}>
-            Create CleanNest Account
-          </h1>
-          <p style={{ color: '#64748b', fontSize: '0.9rem', marginTop: '4px' }}>
-            Join the premier on-demand cleaning network
+        <ArrowLeft size={18} />
+        <div style={{
+          width: '24px',
+          height: '24px',
+          borderRadius: '6px',
+          background: 'linear-gradient(135deg, #15803d 0%, #22c55e 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: '#ffffff',
+        }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <path d="M9 22V12h6v10"></path>
+            <path d="M12 7c2 0 3 1.5 3 3"></path>
+          </svg>
+        </div>
+        <span>Home</span>
+      </Link>
+
+      {/* Left Image Panel */}
+      <div className="auth-left-panel" style={{
+        flex: 1,
+        position: 'relative',
+        backgroundImage: 'url("/images/auth-bg-green.jpg")',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}>
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'linear-gradient(180deg, rgba(21,128,61,0.05) 0%, rgba(20,83,45,0.75) 100%)',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'flex-end',
+          padding: '60px',
+          color: '#fff'
+        }}>
+          <h2 style={{ fontSize: '3rem', fontWeight: 800, marginBottom: '16px', lineHeight: 1.1, color: '#ffffff' }}>
+            Join the CleanNest<br/>Community.
+          </h2>
+          <p style={{ fontSize: '1.2rem', opacity: 0.9, maxWidth: '400px', color: '#ffffff' }}>
+            Experience the best on-demand cleaning service platform, designed for your convenience.
           </p>
         </div>
+      </div>
 
-        {/* Account Type Toggle */}
+      {/* Right Form Panel */}
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '40px 20px',
+        backgroundColor: '#ffffff',
+        overflowY: 'auto'
+      }}>
         <div style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: '8px',
-          backgroundColor: '#f1f5f9',
-          padding: '4px',
-          borderRadius: '14px',
-          marginBottom: '24px'
+          maxWidth: '440px',
+          width: '100%'
         }}>
-          <button
-            type="button"
-            onClick={() => setSelectedRole('customer')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px',
-              padding: '10px',
-              borderRadius: '10px',
-              fontSize: '0.875rem',
-              fontWeight: selectedRole === 'customer' ? 700 : 500,
-              backgroundColor: selectedRole === 'customer' ? '#ffffff' : 'transparent',
-              color: selectedRole === 'customer' ? '#15803d' : '#64748b',
-              boxShadow: selectedRole === 'customer' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none'
-            }}
-          >
-            <User size={16} />
-            <span>I Need Cleaning</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setSelectedRole('cleaner')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px',
-              padding: '10px',
-              borderRadius: '10px',
-              fontSize: '0.875rem',
-              fontWeight: selectedRole === 'cleaner' ? 700 : 500,
-              backgroundColor: selectedRole === 'cleaner' ? '#ffffff' : 'transparent',
-              color: selectedRole === 'cleaner' ? '#15803d' : '#64748b',
-              boxShadow: selectedRole === 'cleaner' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none'
-            }}
-          >
-            <Sparkles size={16} />
-            <span>I Am a Cleaner Pro</span>
-          </button>
-        </div>
-
-        <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          <div>
-            <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#334155', marginBottom: '4px' }}>
-              Full Name
-            </label>
-            <input
-              type="text"
-              required
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', fontSize: '0.9rem' }}
-            />
+          {/* Heading */}
+          <div style={{ marginBottom: '28px' }}>
+            <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', marginBottom: '8px' }}>
+              Create Account
+            </h1>
+            <p style={{ color: '#64748b', fontSize: '0.95rem' }}>
+              Join the premier on-demand cleaning network
+            </p>
           </div>
 
-          <div>
-            <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#334155', marginBottom: '4px' }}>
-              Email Address
-            </label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', fontSize: '0.9rem' }}
-            />
+          {/* Account Type Toggle */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '8px',
+            backgroundColor: '#f1f5f9',
+            padding: '4px',
+            borderRadius: '14px',
+            marginBottom: '24px'
+          }}>
+            <button
+              type="button"
+              onClick={() => setSelectedRole('customer')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                padding: '12px',
+                borderRadius: '10px',
+                fontSize: '0.9rem',
+                fontWeight: selectedRole === 'customer' ? 700 : 500,
+                backgroundColor: selectedRole === 'customer' ? '#ffffff' : 'transparent',
+                color: selectedRole === 'customer' ? '#15803d' : '#64748b',
+                boxShadow: selectedRole === 'customer' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none',
+                cursor: 'pointer',
+                border: 'none',
+                transition: 'all 0.2s'
+              }}
+            >
+              <User size={16} />
+              <span>I Need Cleaning</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setSelectedRole('cleaner')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                padding: '12px',
+                borderRadius: '10px',
+                fontSize: '0.9rem',
+                fontWeight: selectedRole === 'cleaner' ? 700 : 500,
+                backgroundColor: selectedRole === 'cleaner' ? '#ffffff' : 'transparent',
+                color: selectedRole === 'cleaner' ? '#15803d' : '#64748b',
+                boxShadow: selectedRole === 'cleaner' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none',
+                cursor: 'pointer',
+                border: 'none',
+                transition: 'all 0.2s'
+              }}
+            >
+              <Sparkles size={16} />
+              <span>I Am a Cleaner Pro</span>
+            </button>
           </div>
 
-          <div>
-            <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#334155', marginBottom: '4px' }}>
-              Phone Number
-            </label>
-            <input
-              type="tel"
-              required
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', fontSize: '0.9rem' }}
-            />
+          <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                Full Name
+              </label>
+              <input
+                type="text"
+                required
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '12px 14px',
+                  borderRadius: '12px',
+                  fontSize: '0.95rem',
+                  border: '1px solid #e2e8f0',
+                  backgroundColor: '#f8fafc',
+                  outline: 'none'
+                }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                Email Address
+              </label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '12px 14px',
+                  borderRadius: '12px',
+                  fontSize: '0.95rem',
+                  border: '1px solid #e2e8f0',
+                  backgroundColor: '#f8fafc',
+                  outline: 'none'
+                }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                Phone Number
+              </label>
+              <input
+                type="tel"
+                required
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '12px 14px',
+                  borderRadius: '12px',
+                  fontSize: '0.95rem',
+                  border: '1px solid #e2e8f0',
+                  backgroundColor: '#f8fafc',
+                  outline: 'none'
+                }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                Password
+              </label>
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '12px 14px',
+                  borderRadius: '12px',
+                  fontSize: '0.95rem',
+                  border: '1px solid #e2e8f0',
+                  backgroundColor: '#f8fafc',
+                  outline: 'none'
+                }}
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="btn btn-primary"
+              style={{ width: '100%', padding: '14px', borderRadius: '14px', fontSize: '0.95rem', marginTop: '10px' }}
+            >
+              <span>Create {selectedRole === 'customer' ? 'Customer' : 'Provider'} Account</span>
+              <ArrowRight size={18} />
+            </button>
+          </form>
+
+          <div style={{ textAlign: 'center', marginTop: '24px', fontSize: '0.9rem', color: '#64748b' }}>
+            Already have an account?{' '}
+            <Link href="/login" style={{ color: '#15803d', fontWeight: 700 }}>
+              Sign in
+            </Link>
           </div>
-
-          <div>
-            <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#334155', marginBottom: '4px' }}>
-              Password
-            </label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', fontSize: '0.9rem' }}
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="btn btn-primary"
-            style={{ width: '100%', padding: '14px', borderRadius: '9999px', fontSize: '0.95rem', marginTop: '10px' }}
-          >
-            <span>Create {selectedRole === 'customer' ? 'Customer' : 'Provider'} Account</span>
-            <ArrowRight size={18} />
-          </button>
-        </form>
-
-        <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '0.85rem', color: '#64748b' }}>
-          Already have an account?{' '}
-          <Link href="/login" style={{ color: '#15803d', fontWeight: 700 }}>
-            Sign in
-          </Link>
         </div>
       </div>
     </div>

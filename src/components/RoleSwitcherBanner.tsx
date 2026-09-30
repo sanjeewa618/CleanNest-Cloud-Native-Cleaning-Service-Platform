@@ -4,10 +4,13 @@ import React, { useState, useEffect } from 'react';
 import { useCleanNest, UserRole } from '@/context/CleanNestContext';
 import { User, Sparkles, Shield, ArrowRight, Clock } from 'lucide-react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 export const RoleSwitcherBanner: React.FC = () => {
   const { role, setRole, currentUser } = useCleanNest();
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
+
+  const pathname = usePathname();
 
   useEffect(() => {
     setCurrentTime(new Date());
@@ -16,6 +19,10 @@ export const RoleSwitcherBanner: React.FC = () => {
     }, 1000);
     return () => clearInterval(timer);
   }, []);
+
+  if (pathname === '/login' || pathname === '/register') {
+    return null;
+  }
 
 
   return (
