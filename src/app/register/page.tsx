@@ -16,24 +16,42 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('');
   const [serviceCategory, setServiceCategory] = useState('Home Cleaning');
 
-  const handleRegister = (e: React.FormEvent) => {
-    e.preventDefault();
-    setRole(selectedRole);
-    setCurrentUser({
-      id: `usr-${Date.now()}`,
-      name: fullName,
-      email: email,
-      role: selectedRole,
-      avatar: selectedRole === 'cleaner'
-        ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80'
-        : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
-      phone: phone
-    });
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-    if (selectedRole === 'customer') {
-      router.push('/');
-    } else {
-      router.push('/cleaner');
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: fullName,
+          email,
+          password,
+          phone,
+          role: selectedRole === 'customer' ? 'CUSTOMER' : 'CLEANER',
+          category: selectedRole === 'cleaner' ? serviceCategory : undefined,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to register');
+      }
+
+      alert('Registration is successful! Please sign in with your new account.');
+      router.push('/login');
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -317,12 +335,19 @@ export default function RegisterPage() {
               </div>
             )}
 
+            {error && (
+              <div style={{ color: '#ef4444', fontSize: '0.875rem', marginTop: '10px', textAlign: 'center' }}>
+                {error}
+              </div>
+            )}
+
             <button
               type="submit"
+              disabled={isLoading}
               className="btn btn-primary"
-              style={{ width: '100%', padding: '14px', borderRadius: '14px', fontSize: '0.95rem', marginTop: '10px' }}
+              style={{ width: '100%', padding: '14px', borderRadius: '14px', fontSize: '0.95rem', marginTop: '10px', opacity: isLoading ? 0.7 : 1 }}
             >
-              <span>Create {selectedRole === 'customer' ? 'Customer' : 'Provider'} Account</span>
+              <span>{isLoading ? 'Registering...' : `Create ${selectedRole === 'customer' ? 'Customer' : 'Provider'} Account`}</span>
               <ArrowRight size={18} />
             </button>
           </form>

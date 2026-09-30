@@ -25,8 +25,11 @@ export default function CategoryCleanersPage() {
     );
   }
 
-  // Find all cleaners who have this service name in their specialties
-  const availableCleaners = cleaners.filter((c) => c.specialties.includes(service.name));
+  // Find all active cleaners who have this service name in their specialties
+  const availableCleaners = cleaners.filter((c) => 
+    c.specialties?.includes(service.name) && 
+    (c.status === 'ACTIVE' || c.status === 'active')
+  );
 
   return (
     <div style={{ backgroundColor: '#f8fafc', minHeight: '100vh', paddingBottom: '80px' }}>

@@ -7,7 +7,7 @@ import { ShieldCheck, Heart, Sparkles, Phone, Mail, MapPin } from 'lucide-react'
 
 export const Footer: React.FC = () => {
   const pathname = usePathname();
-  if (pathname === '/login' || pathname === '/register') {
+  if (pathname === '/login' || pathname === '/register' || pathname?.startsWith('/admin')) {
     return null;
   }
 

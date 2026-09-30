@@ -108,15 +108,15 @@ function BookingForm() {
     setIsPaymentModalOpen(true);
   };
 
-  const finalizeBooking = () => {
+  const finalizeBooking = async () => {
     setIsProcessingPayment(true);
 
     const chosenCleaner = cleanerChoice !== 'auto'
       ? cleaners.find((c) => c.id === cleanerChoice)
       : cleaners[0];
 
-    setTimeout(() => {
-      const created = createBooking({
+    try {
+      const created = await createBooking({
         customerId: currentUser.id,
         customerName: currentUser.name,
         customerPhone: currentUser.phone || '+1 (555) 019-2834',
@@ -148,10 +148,17 @@ function BookingForm() {
         paymentStatus: 'paid'
       });
 
+      // Simulate a small delay for payment processing UI
+      setTimeout(() => {
+        setIsProcessingPayment(false);
+        setIsPaymentModalOpen(false);
+        setConfirmedBookingId(created.id);
+      }, 1500);
+    } catch (err) {
+      console.error(err);
       setIsProcessingPayment(false);
-      setIsPaymentModalOpen(false);
-      setConfirmedBookingId(created.id);
-    }, 1500);
+      alert('Failed to create booking.');
+    }
   };
 
   if (confirmedBookingId) {
@@ -606,7 +613,7 @@ function BookingForm() {
                 </div>
 
                 {/* Specific Cleaners */}
-                {cleaners.map((c) => (
+                {cleaners.filter(c => c.status === 'ACTIVE' || c.status === 'active').map((c) => (
                   <div
                     key={c.id}
                     onClick={() => setCleanerChoice(c.id)}

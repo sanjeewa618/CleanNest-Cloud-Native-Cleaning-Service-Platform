@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useCleanNest } from '@/context/CleanNestContext';
 import { Booking } from '@/data/mockData';
 import {
@@ -30,15 +31,29 @@ export default function CleanerPortalPage() {
     updateBookingStatus,
     toggleCleanerOnline,
     updateCleanerServices,
-    services
+    services,
+    currentUser
   } = useCleanNest();
+  const router = useRouter();
 
-  const cleaner = cleaners[0]; // Marcus Vance demo
+  // Find the logged-in cleaner
+  const cleaner = cleaners.find(c => c.id === currentUser?.id) || cleaners[0]; // fallback to mock for dev if needed
+  
   const [activeTab, setActiveTab] = useState<'jobs' | 'services' | 'schedule' | 'earnings'>('jobs');
+
+  useEffect(() => {
+    if (!currentUser || currentUser.role !== 'cleaner') {
+      router.push('/login');
+    }
+  }, [currentUser, router]);
+
+  if (!cleaner) {
+    return <div style={{ padding: '80px', textAlign: 'center' }}>Loading cleaner profile...</div>;
+  }
 
   // Filter bookings for this cleaner
   const cleanerBookings = bookings.filter(
-    (b) => b.cleanerId === cleaner.id || !b.cleanerId
+    (b) => b.cleanerId === cleaner.id || (!b.cleanerId && cleaner.specialties?.includes(b.serviceName))
   );
 
   const activeJobs = cleanerBookings.filter(
@@ -52,9 +67,10 @@ export default function CleanerPortalPage() {
   };
 
   const handleToggleSpecialty = (serviceName: string) => {
-    const updated = cleaner.specialties.includes(serviceName)
-      ? cleaner.specialties.filter((s) => s !== serviceName)
-      : [...cleaner.specialties, serviceName];
+    const currentSpecialties = cleaner.specialties || [];
+    const updated = currentSpecialties.includes(serviceName)
+      ? currentSpecialties.filter((s) => s !== serviceName)
+      : [...currentSpecialties, serviceName];
     updateCleanerServices(cleaner.id, updated);
   };
 
@@ -122,12 +138,12 @@ export default function CleanerPortalPage() {
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginTop: '6px' }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.85rem', fontWeight: 700, color: '#0f172a' }}>
-                  <Star size={15} fill="#f59e0b" color="#f59e0b" /> {cleaner.rating}
-                  <span style={{ color: '#64748b', fontWeight: 400 }}>({cleaner.reviewCount} reviews)</span>
+                  <Star size={15} fill="#f59e0b" color="#f59e0b" /> {cleaner.rating || '5.0'}
+                  <span style={{ color: '#64748b', fontWeight: 400 }}>({cleaner.reviewCount || 0} reviews)</span>
                 </span>
                 <span style={{ color: '#cbd5e1' }}>•</span>
                 <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#15803d' }}>
-                  {cleaner.jobsCompleted} Completed Jobs
+                  {cleaner.jobsCompleted || 0} Completed Jobs
                 </span>
               </div>
             </div>
@@ -192,7 +208,7 @@ export default function CleanerPortalPage() {
               <DollarSign size={18} color="#15803d" />
             </div>
             <div style={{ fontSize: '1.85rem', fontWeight: 800, color: '#15803d' }}>
-              ${cleaner.earnings.today}
+              ${cleaner.earnings?.today || 0}
             </div>
             <div style={{ fontSize: '0.75rem', color: '#16a34a', fontWeight: 600, marginTop: '4px' }}>
               +2 completed today
@@ -211,7 +227,7 @@ export default function CleanerPortalPage() {
               <TrendingUp size={18} color="#0284c7" />
             </div>
             <div style={{ fontSize: '1.85rem', fontWeight: 800, color: '#0f172a' }}>
-              ${cleaner.earnings.thisWeek}
+              ${cleaner.earnings?.thisWeek || 0}
             </div>
             <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
               Payout scheduled for Monday
@@ -230,7 +246,7 @@ export default function CleanerPortalPage() {
               <DollarSign size={18} color="#f59e0b" />
             </div>
             <div style={{ fontSize: '1.85rem', fontWeight: 800, color: '#0f172a' }}>
-              ${cleaner.earnings.total.toLocaleString()}
+              ${cleaner.earnings?.total?.toLocaleString() || 0}
             </div>
             <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
               Direct bank deposit verified
@@ -487,7 +503,7 @@ export default function CleanerPortalPage() {
               gap: '16px'
             }}>
               {services.map((srv) => {
-                const isSelected = cleaner.specialties.includes(srv.name);
+                const isSelected = (cleaner.specialties || []).includes(srv.name);
                 return (
                   <div
                     key={srv.id}
@@ -547,7 +563,7 @@ export default function CleanerPortalPage() {
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', maxWidth: '600px' }}>
-              {cleaner.availability.map((slot, idx) => (
+              {(cleaner.availability || []).map((slot, idx) => (
                 <div
                   key={idx}
                   style={{

@@ -45,8 +45,9 @@ export default function ServiceDetailsPage() {
   const selectedPackage = service.packages.find((p) => p.id === selectedPackageId) || service.packages[0];
   const totalPrice = (selectedPackage ? selectedPackage.pricePerHour : service.basePrice) * selectedHours;
 
-  const categoryCleaners = cleaners.filter(c => c.specialties.includes(service.name));
-  const displayCleaners = categoryCleaners.length > 0 ? categoryCleaners : cleaners.slice(0, 2);
+  const activeCleaners = cleaners.filter(c => c.status === 'ACTIVE' || c.status === 'active');
+  const categoryCleaners = activeCleaners.filter(c => c.specialties?.includes(service.name));
+  const displayCleaners = categoryCleaners.length > 0 ? categoryCleaners : activeCleaners.slice(0, 2);
 
   const handleShare = () => {
     if (typeof window !== 'undefined') {

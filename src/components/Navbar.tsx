@@ -30,7 +30,8 @@ export const Navbar: React.FC = () => {
     notifications,
     markNotificationAsRead,
     clearNotifications,
-    setRole
+    setRole,
+    logout
   } = useCleanNest();
 
   const [isLocationModalOpen, setLocationModalOpen] = useState(false);
@@ -39,8 +40,6 @@ export const Navbar: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('home');
   const pathname = usePathname();
-
-
 
   useEffect(() => {
     const handleScroll = () => {
@@ -77,7 +76,7 @@ export const Navbar: React.FC = () => {
 
   const unreadNotifsCount = notifications.filter((n) => !n.read).length;
 
-  if (pathname === '/login' || pathname === '/register') {
+  if (pathname === '/login' || pathname === '/register' || pathname?.startsWith('/admin')) {
     return null;
   }
 
@@ -388,9 +387,11 @@ export const Navbar: React.FC = () => {
                   </Link>
 
                   <div style={{ borderTop: '1px solid #f1f5f9', marginTop: '6px', paddingTop: '6px' }}>
-                    <Link
-                      href="/login"
-                      onClick={() => setShowUserMenu(false)}
+                    <button
+                      onClick={() => {
+                        setShowUserMenu(false);
+                        logout();
+                      }}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -398,12 +399,16 @@ export const Navbar: React.FC = () => {
                         padding: '8px 10px',
                         borderRadius: '8px',
                         fontSize: '0.875rem',
-                        color: '#ef4444'
+                        color: '#ef4444',
+                        background: 'none',
+                        border: 'none',
+                        width: '100%',
+                        cursor: 'pointer'
                       }}
                     >
                       <LogOut size={16} />
                       <span>Sign Out</span>
-                    </Link>
+                    </button>
                   </div>
                 </div>
               )}

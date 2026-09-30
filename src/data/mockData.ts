@@ -40,7 +40,7 @@ export interface Cleaner {
   phone: string;
   email: string;
   isOnline: boolean;
-  status: 'active' | 'suspended';
+  status: 'active' | 'suspended' | 'ACTIVE' | 'PENDING' | 'REJECTED' | 'SUSPENDED';
   specialties: string[];
   earnings: {
     today: number;

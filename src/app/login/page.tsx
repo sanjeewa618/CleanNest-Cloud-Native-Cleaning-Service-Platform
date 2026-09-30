@@ -8,14 +8,63 @@ import { ArrowRight, Lock, Mail, ArrowLeft } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { setRole } = useCleanNest();
+  const { setRole, setCurrentUser } = useCleanNest();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setRole('customer');
-    router.push('/');
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Invalid credentials');
+      }
+
+      // Save token
+      localStorage.setItem('cleannest_token', data.token);
+
+      const userProfile = {
+        id: data.user.id,
+        name: data.user.name,
+        email: data.user.email,
+        role: data.user.role.toLowerCase(),
+        avatar: data.user.avatar,
+        phone: data.user.phone
+      };
+
+      // Save full user data so it persists on refresh
+      localStorage.setItem('cleannest_user', JSON.stringify(userProfile));
+
+      // Update context
+      setRole(data.user.role.toLowerCase());
+      setCurrentUser(userProfile);
+
+      if (data.user.role === 'CUSTOMER' || data.user.role === 'customer') {
+        router.push('/');
+      } else if (data.user.role === 'ADMIN' || data.user.role === 'admin') {
+        router.push('/admin');
+      } else {
+        router.push('/cleaner');
+      }
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -180,12 +229,19 @@ export default function LoginPage() {
               </div>
             </div>
 
+            {error && (
+              <div style={{ color: '#ef4444', fontSize: '0.875rem', marginTop: '10px', textAlign: 'center' }}>
+                {error}
+              </div>
+            )}
+
             <button
               type="submit"
+              disabled={isLoading}
               className="btn btn-primary"
-              style={{ width: '100%', padding: '14px', borderRadius: '14px', fontSize: '0.95rem', marginTop: '8px' }}
+              style={{ width: '100%', padding: '14px', borderRadius: '14px', fontSize: '0.95rem', marginTop: '8px', opacity: isLoading ? 0.7 : 1 }}
             >
-              <span>Sign In</span>
+              <span>{isLoading ? 'Signing In...' : 'Sign In'}</span>
               <ArrowRight size={18} />
             </button>
           </form>

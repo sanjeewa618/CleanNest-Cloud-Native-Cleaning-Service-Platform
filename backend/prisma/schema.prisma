@@ -19,14 +19,18 @@ model User {
   role      Role     @default(CUSTOMER)
   
   // Cleaner specific fields
-  category  String?  // e.g. "Home Cleaning"
+  category  String?  // e.g. "Home Cleaning", "Deep Cleaning"
   avatar    String?
   rating    Float?   @default(5.0)
-  jobs      Int?     @default(0)
+  jobsCount Int      @default(0)
+  bio       String?  // A short description about the cleaner
+  status    String   @default("ACTIVE") // ACTIVE, PENDING, REJECTED, SUSPENDED
   
   // Relationships
   bookingsAsCustomer Booking[] @relation("CustomerBookings")
   bookingsAsCleaner  Booking[] @relation("CleanerBookings")
+  reviewsGiven       Review[]  @relation("ReviewsWritten")
+  reviewsReceived    Review[]  @relation("ReviewsReceived")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -35,10 +39,12 @@ model User {
 model Booking {
   id          String   @id @default(uuid())
   serviceType String   // e.g. "Home Cleaning", "Sofa Cleaning"
-  date        DateTime
-  timeSlot    String
+  date        DateTime // Date of the service
+  timeSlot    String   // e.g. "09:00 AM - 11:00 AM"
   status      BookingStatus @default(PENDING)
   price       Float
+  address     String   // Location of the cleaning
+  notes       String?  // Special instructions
   
   // Relationships
   customerId  String
@@ -47,8 +53,28 @@ model Booking {
   cleanerId   String?
   cleaner     User?    @relation("CleanerBookings", fields: [cleanerId], references: [id])
   
+  review      Review?  // A booking can have one review
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model Review {
+  id          String   @id @default(uuid())
+  rating      Int      // 1 to 5
+  comment     String?
+  
+  // Relationships
+  bookingId   String   @unique
+  booking     Booking  @relation(fields: [bookingId], references: [id])
+  
+  authorId    String
+  author      User     @relation("ReviewsWritten", fields: [authorId], references: [id])
+  
+  cleanerId   String
+  cleaner     User     @relation("ReviewsReceived", fields: [cleanerId], references: [id])
+
+  createdAt   DateTime @default(now())
 }
 
 enum Role {
