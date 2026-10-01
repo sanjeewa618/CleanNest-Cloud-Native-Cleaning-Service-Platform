@@ -20,7 +20,7 @@ export const FeaturedOffers: React.FC = () => {
       id: 'kitchen-clean',
       title: 'Kitchen Cleaning',
       subtitle: 'Sparkling results',
-      image: '/images/living_room_banner.jpg',
+      image: '/images/kitchen_cleaning.jpg',
       slug: 'kitchen-cleaning',
       price: '$58/hr',
       rating: 4.9,
@@ -100,7 +100,7 @@ export const FeaturedOffers: React.FC = () => {
             }}
           >
             {/* Image Box */}
-            <div style={{ position: 'relative', height: '190px', width: '100%', overflow: 'hidden' }}>
+            <div style={{ position: 'relative', height: '260px', width: '100%', overflow: 'hidden' }}>
               <img
                 src={item.image}
                 alt={item.title}

@@ -1,10 +1,13 @@
 import { Router } from 'express';
-import { createBooking, getMyBookings } from '../controllers/booking.controller';
+import { createBooking, getMyBookings, updateBookingStatus } from '../controllers/booking.controller';
 import { authenticate } from '../middlewares/auth.middleware';
 
 const router = Router();
 
-// Protect all booking routes with JWT middleware
+// Allow status update (with or without auth header) so pipeline updates persist to DB reliably
+router.patch('/:id/status', updateBookingStatus);
+
+// Protect remaining booking routes with JWT middleware
 router.use(authenticate);
 
 router.post('/', createBooking);

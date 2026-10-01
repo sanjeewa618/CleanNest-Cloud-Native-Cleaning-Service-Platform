@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 
 export default function CustomerBookingsPage() {
-  const { bookings, cancelBooking, rescheduleBooking, submitReview } = useCleanNest();
+  const { bookings, cleaners, currentUser, cancelBooking, rescheduleBooking, submitReview } = useCleanNest();
 
   const [activeTab, setActiveTab] = useState<'all' | 'active' | 'completed' | 'cancelled'>('all');
   const [selectedBookingForReview, setSelectedBookingForReview] = useState<Booking | null>(null);
@@ -36,7 +36,18 @@ export default function CustomerBookingsPage() {
   const [newDateInput, setNewDateInput] = useState('Next Monday, Oct 6th');
   const [newTimeInput, setNewTimeInput] = useState('10:00 AM - 01:00 PM');
 
-  const filteredBookings = bookings.filter((b) => {
+  // Filter bookings for current logged-in customer (or show created real bookings)
+  const userBookings = bookings.filter((b) => {
+    if (!currentUser) return true;
+    return (
+      b.customerId === currentUser.id ||
+      b.customerName === currentUser.name ||
+      !b.customerId ||
+      b.customerId === 'usr-cust'
+    );
+  });
+
+  const filteredBookings = userBookings.filter((b) => {
     if (activeTab === 'all') return true;
     if (activeTab === 'active') return b.status !== 'completed' && b.status !== 'cancelled';
     if (activeTab === 'completed') return b.status === 'completed';
@@ -79,6 +90,7 @@ export default function CustomerBookingsPage() {
           </span>
         );
       case 'accepted':
+      case 'confirmed' as any:
         return (
           <span style={{
             display: 'inline-flex',
@@ -190,7 +202,7 @@ export default function CustomerBookingsPage() {
         </div>
 
         {/* Tab Filters */}
-        <div className="scroll-animate fade-up delay-200" style={{
+        <div style={{
           display: 'inline-flex',
           backgroundColor: '#ffffff',
           padding: '6px',
@@ -220,7 +232,7 @@ export default function CustomerBookingsPage() {
 
         {/* Bookings List */}
         {filteredBookings.length === 0 ? (
-          <div className="scroll-animate fade-up delay-300" style={{
+          <div style={{
             backgroundColor: '#ffffff',
             borderRadius: '24px',
             padding: '60px 20px',
@@ -242,7 +254,6 @@ export default function CustomerBookingsPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {filteredBookings.map((b, idx) => (
               <div
-                className={`scroll-animate fade-up delay-${(idx + 1) * 100}`}
                 key={b.id}
                 style={{
                   backgroundColor: '#ffffff',
@@ -312,7 +323,8 @@ export default function CustomerBookingsPage() {
                         { key: 'completed', label: 'Completed' }
                       ].map((step, idx) => {
                         const stepOrder = ['accepted', 'on_the_way', 'in_progress', 'completed'];
-                        const currentIdx = stepOrder.indexOf(b.status);
+                        const normalizedStatus = (b.status as any) === 'confirmed' ? 'accepted' : b.status;
+                        const currentIdx = stepOrder.indexOf(normalizedStatus);
                         const isDone = currentIdx >= idx;
                         const isCurrent = currentIdx === idx;
 
@@ -366,43 +378,58 @@ export default function CustomerBookingsPage() {
                   alignItems: 'center'
                 }}>
                   {/* Cleaner Info */}
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '14px',
-                    padding: '14px',
-                    backgroundColor: '#ffffff',
-                    borderRadius: '16px',
-                    border: '1px solid #e2e8f0'
-                  }}>
-                    <img
-                      src={b.cleanerAvatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80'}
-                      alt={b.cleanerName || 'Cleaner'}
-                      style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover' }}
-                    />
-                    <div>
-                      <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Assigned Cleaner:</div>
-                      <div style={{ fontWeight: 800, fontSize: '1rem', color: '#0f172a' }}>
-                        {b.cleanerName || 'Top Rated Pro'}
+                  {(() => {
+                    const matchedCleaner = cleaners.find((c) => c.id === b.cleanerId) || (b as any).cleaner;
+                    const cleanerName = b.cleanerName || matchedCleaner?.name || 'Top Rated Pro';
+                    const cleanerAvatar = b.cleanerAvatar || matchedCleaner?.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80';
+                    const cleanerPhone = b.cleanerPhone || matchedCleaner?.phone || '+1 (555) 234-8901';
+
+                    return (
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '14px',
+                        padding: '14px',
+                        backgroundColor: '#ffffff',
+                        borderRadius: '16px',
+                        border: '1px solid #e2e8f0'
+                      }}>
+                        <img
+                          src={cleanerAvatar}
+                          alt={cleanerName}
+                          style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover' }}
+                        />
+                        <div>
+                          <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Assigned Cleaner:</div>
+                          <div style={{ fontWeight: 800, fontSize: '1rem', color: '#0f172a' }}>
+                            {cleanerName}
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', color: '#15803d', marginTop: '2px' }}>
+                            <Phone size={12} />
+                            <span>{cleanerPhone}</span>
+                          </div>
+                        </div>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', color: '#15803d', marginTop: '2px' }}>
-                        <Phone size={12} />
-                        <span>{b.cleanerPhone || '+1 (555) 234-8901'}</span>
-                      </div>
-                    </div>
-                  </div>
+                    );
+                  })()}
 
                   {/* Location & Total */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '0.875rem', color: '#334155' }}>
                       <MapPin size={16} color="#15803d" style={{ marginTop: '2px', flexShrink: 0 }} />
-                      <span>{b.customerAddress.street}, {b.customerAddress.apartment && `${b.customerAddress.apartment}, `}{b.customerAddress.city}</span>
+                      <span>
+                        {b.customerAddress
+                          ? `${b.customerAddress.street || ''}${b.customerAddress.apartment ? ', ' + b.customerAddress.apartment : ''}${b.customerAddress.city ? ', ' + b.customerAddress.city : ''}`
+                          : (b as any).address || 'Address not available'}
+                      </span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '4px' }}>
                       <span style={{ fontSize: '0.85rem', color: '#64748b' }}>Total Paid:</span>
-                      <strong style={{ fontSize: '1.25rem', color: '#15803d' }}>${b.totalAmount.toFixed(2)}</strong>
+                      <strong style={{ fontSize: '1.25rem', color: '#15803d' }}>
+                        ${(b.totalAmount ?? (b as any).price ?? 0).toFixed(2)}
+                      </strong>
                       <span style={{ fontSize: '0.75rem', backgroundColor: '#dcfce7', color: '#14532d', padding: '2px 8px', borderRadius: '6px', fontWeight: 700 }}>
-                        {b.paymentStatus.toUpperCase()}
+                        {(b.paymentStatus ?? 'paid').toUpperCase()}
                       </span>
                     </div>
                   </div>

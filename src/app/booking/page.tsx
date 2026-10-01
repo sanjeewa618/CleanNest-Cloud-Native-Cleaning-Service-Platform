@@ -38,8 +38,50 @@ function BookingForm() {
 
   const [packageId, setPackageId] = useState(initialPackage.id);
   const [hours, setHours] = useState(draftBooking?.hours || 3);
-  const [selectedDate, setSelectedDate] = useState('Tomorrow, Oct 1st');
+  // --- Dynamic Date/Time Logic ---
+  const now = new Date();
+
+  // Generate 5 real date options starting from today
+  const generateDateOptions = () => {
+    const options = [];
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const suffixes: Record<number, string> = { 1: 'st', 2: 'nd', 3: 'rd' };
+    const getSuffix = (d: number) => suffixes[d] || (d >= 11 && d <= 13 ? 'th' : suffixes[d % 10] || 'th');
+
+    for (let i = 0; i < 5; i++) {
+      const d = new Date(now);
+      d.setDate(now.getDate() + i);
+      const dayLabel = i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : dayNames[d.getDay()];
+      const dateStr = `${monthNames[d.getMonth()]} ${d.getDate()}${getSuffix(d.getDate())}`;
+      const label = i === 0 ? 'Express ($10)' : i === 1 ? 'Recommended' : d.getDay() === 0 || d.getDay() === 6 ? 'Weekend' : 'Standard';
+      options.push({ day: dayLabel, date: dateStr, label, dateObj: d });
+    }
+    return options;
+  };
+
+  const dateOptions = generateDateOptions();
+  const todayOption = dateOptions[0];
+  const tomorrowOption = dateOptions[1];
+
+  const [selectedDate, setSelectedDate] = useState(`${tomorrowOption.day}, ${tomorrowOption.date}`);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState('10:00 AM - 01:00 PM');
+
+  // Check if a time slot has already passed today
+  const isSlotPast = (slot: string): boolean => {
+    const selectedDayLabel = selectedDate.split(',')[0].trim();
+    if (selectedDayLabel !== 'Today') return false; // Future dates: all slots available
+    const endTime = slot.split(' - ')[1]; // e.g. "11:00 AM"
+    const [timeStr, meridiem] = endTime.trim().split(' ');
+    const [hrs, mins] = timeStr.split(':').map(Number);
+    let endHour = hrs;
+    if (meridiem === 'PM' && hrs !== 12) endHour += 12;
+    if (meridiem === 'AM' && hrs === 12) endHour = 0;
+    const slotEndMinutes = endHour * 60 + mins;
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+    return nowMinutes >= slotEndMinutes;
+  };
+
   const [cleanerChoice, setCleanerChoice] = useState<string>(preselectedCleaner || 'auto'); // 'auto' or cleaner ID
   const [streetAddress, setStreetAddress] = useState('742 Evergreen Terrace');
   const [apt, setApt] = useState('Apt 4B');
@@ -54,6 +96,10 @@ function BookingForm() {
   const [confirmedBookingId, setConfirmedBookingId] = useState<string | null>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+
+  const chosenCleaner = cleanerChoice !== 'auto'
+    ? cleaners.find((c) => c.id === cleanerChoice)
+    : (cleaners.find(c => (c.status === 'ACTIVE' || c.status === 'active') && c.specialties?.includes(selectedService.name)) || cleaners[0]);
 
   const currentPkg = selectedService.packages.find((p) => p.id === packageId) || selectedService.packages[0];
 
@@ -87,13 +133,6 @@ function BookingForm() {
     '05:00 PM - 08:00 PM'
   ];
 
-  const dateOptions = [
-    { day: 'Today', date: 'Sep 30', label: 'Express ($10)' },
-    { day: 'Tomorrow', date: 'Oct 1st', label: 'Recommended' },
-    { day: 'Thursday', date: 'Oct 2nd', label: 'Standard' },
-    { day: 'Friday', date: 'Oct 3rd', label: 'Standard' },
-    { day: 'Saturday', date: 'Oct 4th', label: 'Weekend' }
-  ];
 
   const handleApplyPromo = (e: React.FormEvent) => {
     e.preventDefault();
@@ -110,10 +149,6 @@ function BookingForm() {
 
   const finalizeBooking = async () => {
     setIsProcessingPayment(true);
-
-    const chosenCleaner = cleanerChoice !== 'auto'
-      ? cleaners.find((c) => c.id === cleanerChoice)
-      : cleaners[0];
 
     try {
       const created = await createBooking({
@@ -139,7 +174,7 @@ function BookingForm() {
         cleanerName: chosenCleaner?.name,
         cleanerAvatar: chosenCleaner?.avatar,
         cleanerPhone: chosenCleaner?.phone,
-        status: 'accepted',
+        status: 'pending',
         subtotal: baseSubtotal,
         discount: discountAmount,
         serviceFee: serviceFee,
@@ -216,7 +251,7 @@ function BookingForm() {
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.9rem' }}>
               <span style={{ color: '#64748b' }}>Assigned Cleaner:</span>
-              <strong style={{ color: '#0f172a' }}>{cleaners[0].name}</strong>
+              <strong style={{ color: '#0f172a' }}>{chosenCleaner?.name || 'Auto-matched Pro'}</strong>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.9rem' }}>
               <span style={{ color: '#64748b' }}>Service Location:</span>
@@ -430,23 +465,35 @@ function BookingForm() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px' }}>
                 {timeSlots.map((slot) => {
                   const isSelected = selectedTimeSlot === slot;
+                  const isPast = isSlotPast(slot);
                   return (
                     <div
                       key={slot}
-                      onClick={() => setSelectedTimeSlot(slot)}
+                      onClick={() => !isPast && setSelectedTimeSlot(slot)}
                       style={{
                         padding: '12px 14px',
                         borderRadius: '12px',
-                        border: isSelected ? '2px solid #15803d' : '1px solid #e2e8f0',
-                        backgroundColor: isSelected ? '#f0fdf4' : '#ffffff',
-                        color: isSelected ? '#15803d' : '#334155',
+                        border: isPast
+                          ? '1px solid #fecaca'
+                          : isSelected
+                          ? '2px solid #15803d'
+                          : '1px solid #e2e8f0',
+                        backgroundColor: isPast
+                          ? '#fff1f2'
+                          : isSelected
+                          ? '#f0fdf4'
+                          : '#ffffff',
+                        color: isPast ? '#f87171' : isSelected ? '#15803d' : '#334155',
                         fontWeight: 600,
                         fontSize: '0.85rem',
                         textAlign: 'center',
-                        cursor: 'pointer'
+                        cursor: isPast ? 'not-allowed' : 'pointer',
+                        opacity: isPast ? 0.7 : 1,
+                        textDecoration: isPast ? 'line-through' : 'none'
                       }}
                     >
                       {slot}
+                      {isPast && <div style={{ fontSize: '0.65rem', color: '#f87171', fontWeight: 700, marginTop: '2px' }}>Passed</div>}
                     </div>
                   );
                 })}
@@ -944,8 +991,8 @@ function BookingForm() {
         <div style={{
           position: 'fixed',
           top: 0, left: 0, right: 0, bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          backdropFilter: 'blur(4px)',
+          backgroundColor: 'rgba(15, 23, 42, 0.6)',
+          backdropFilter: 'blur(6px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -954,51 +1001,144 @@ function BookingForm() {
         }}>
           <div style={{
             backgroundColor: '#ffffff',
-            borderRadius: '24px',
+            borderRadius: '28px',
             width: '100%',
-            maxWidth: '480px',
-            padding: '32px',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-            position: 'relative'
+            maxWidth: '500px',
+            padding: '36px',
+            boxShadow: '0 30px 60px -12px rgba(0,0,0,0.3)',
+            position: 'relative',
+            border: '1px solid #e2e8f0'
           }}>
+            {/* Close button */}
             <button
               onClick={() => !isProcessingPayment && setIsPaymentModalOpen(false)}
               style={{
-                position: 'absolute',
-                top: '20px',
-                right: '20px',
-                background: 'none',
-                border: 'none',
-                fontSize: '1.5rem',
-                cursor: 'pointer',
-                color: '#94a3b8'
+                position: 'absolute', top: '18px', right: '18px',
+                background: '#f1f5f9', border: 'none', width: '32px', height: '32px',
+                borderRadius: '50%', fontSize: '1.1rem', cursor: 'pointer',
+                color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontWeight: 700
               }}
             >
-              &times;
+              ×
             </button>
 
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0f172a', marginBottom: '8px' }}>
-              Payment Details
-            </h2>
-            <p style={{ color: '#64748b', fontSize: '0.95rem', marginBottom: '24px' }}>
-              You have selected {paymentMethod === 'card' ? 'Credit/Debit Card' : paymentMethod === 'apple_pay' ? 'Apple Pay' : 'Cash Post-Clean'}.
-            </p>
+            {/* Header */}
+            <div style={{ marginBottom: '24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                <div style={{
+                  width: '40px', height: '40px', borderRadius: '12px',
+                  background: 'linear-gradient(135deg, #15803d, #22c55e)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff'
+                }}>
+                  <CreditCard size={20} />
+                </div>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0f172a' }}>Secure Checkout</h2>
+              </div>
+              <p style={{ color: '#64748b', fontSize: '0.9rem', marginLeft: '50px' }}>
+                {paymentMethod === 'card' ? 'Enter your card details below' : paymentMethod === 'apple_pay' ? 'Apple Pay selected' : 'Cash payment selected'}
+              </p>
+            </div>
+
+            {/* Total badge */}
+            <div style={{
+              backgroundColor: '#f0fdf4', borderRadius: '14px', padding: '14px 18px',
+              border: '1px solid #dcfce7', display: 'flex', justifyContent: 'space-between',
+              alignItems: 'center', marginBottom: '24px'
+            }}>
+              <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#15803d' }}>📅 {selectedDate} · {selectedTimeSlot}</span>
+              <span style={{ fontSize: '1.3rem', fontWeight: 800, color: '#15803d' }}>${grandTotal.toFixed(2)}</span>
+            </div>
 
             {paymentMethod === 'card' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>Card Number</label>
-                  <input type="text" placeholder="0000 0000 0000 0000" style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', border: '1px solid #cbd5e1', fontSize: '0.95rem' }} />
+                {/* Accepted cards */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600 }}>ACCEPTED:</span>
+                  {['VISA', 'MC', 'AMEX', 'DISC'].map((brand) => (
+                    <div key={brand} style={{
+                      padding: '3px 8px', borderRadius: '6px', border: '1px solid #e2e8f0',
+                      fontSize: '0.65rem', fontWeight: 800,
+                      color: brand === 'VISA' ? '#1a1f71' : brand === 'MC' ? '#eb001b' : brand === 'AMEX' ? '#007bc1' : '#ff6600',
+                      backgroundColor: '#f8fafc'
+                    }}>{brand}</div>
+                  ))}
                 </div>
+
+                {/* Name on card */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>Name on Card</label>
+                  <input
+                    type="text"
+                    placeholder="Enter cardholder's name"
+                    style={{
+                      width: '100%', padding: '13px 16px', borderRadius: '12px',
+                      border: '1.5px solid #e2e8f0', fontSize: '0.95rem', outline: 'none',
+                      transition: 'border-color 0.2s', backgroundColor: '#f8fafc'
+                    }}
+                    onFocus={e => e.target.style.borderColor = '#22c55e'}
+                    onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+                  />
+                </div>
+
+                {/* Card number */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>Card Number</label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type="text"
+                      placeholder="0000 · 0000 · 0000 · 0000"
+                      maxLength={19}
+                      style={{
+                        width: '100%', padding: '13px 48px 13px 16px', borderRadius: '12px',
+                        border: '1.5px solid #e2e8f0', fontSize: '0.95rem', outline: 'none',
+                        backgroundColor: '#f8fafc', letterSpacing: '0.05em'
+                      }}
+                      onFocus={e => e.target.style.borderColor = '#22c55e'}
+                      onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+                    />
+                    <CreditCard size={18} color="#94a3b8" style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)' }} />
+                  </div>
+                </div>
+
+                {/* Expiry + CVC */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>Expiry Date</label>
-                    <input type="text" placeholder="MM/YY" style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', border: '1px solid #cbd5e1', fontSize: '0.95rem' }} />
+                    <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>Card Expiration Date</label>
+                    <input
+                      type="text"
+                      placeholder="MM / YY"
+                      maxLength={5}
+                      style={{
+                        width: '100%', padding: '13px 16px', borderRadius: '12px',
+                        border: '1.5px solid #e2e8f0', fontSize: '0.95rem', outline: 'none',
+                        backgroundColor: '#f8fafc'
+                      }}
+                      onFocus={e => e.target.style.borderColor = '#22c55e'}
+                      onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+                    />
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>CVC</label>
-                    <input type="text" placeholder="123" style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', border: '1px solid #cbd5e1', fontSize: '0.95rem' }} />
+                    <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>CVV</label>
+                    <input
+                      type="text"
+                      placeholder="• • •"
+                      maxLength={4}
+                      style={{
+                        width: '100%', padding: '13px 16px', borderRadius: '12px',
+                        border: '1.5px solid #e2e8f0', fontSize: '0.95rem', outline: 'none',
+                        backgroundColor: '#f8fafc', letterSpacing: '0.2em'
+                      }}
+                      onFocus={e => e.target.style.borderColor = '#22c55e'}
+                      onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+                    />
                   </div>
+                </div>
+
+                {/* Security note */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 16px', backgroundColor: '#f0fdf4', borderRadius: '10px', border: '1px solid #dcfce7' }}>
+                  <ShieldCheck size={16} color="#15803d" />
+                  <span style={{ fontSize: '0.78rem', color: '#15803d', fontWeight: 600 }}>256-bit SSL encryption · We never store your card details</span>
                 </div>
               </div>
             )}
@@ -1017,25 +1157,24 @@ function BookingForm() {
               </div>
             )}
 
+            {/* Confirm button */}
             <button
               type="button"
               onClick={finalizeBooking}
               disabled={isProcessingPayment}
-              className="btn btn-primary"
               style={{
-                width: '100%',
-                padding: '16px',
-                fontSize: '1.05rem',
-                borderRadius: '9999px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '10px',
-                opacity: isProcessingPayment ? 0.7 : 1
+                width: '100%', padding: '16px',
+                fontSize: '1.05rem', fontWeight: 700, borderRadius: '9999px',
+                background: isProcessingPayment ? '#86efac' : 'linear-gradient(135deg, #15803d, #22c55e)',
+                color: '#ffffff', border: 'none', cursor: isProcessingPayment ? 'not-allowed' : 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+                boxShadow: '0 8px 20px -4px rgba(21,128,61,0.4)',
+                transition: 'all 0.2s ease',
+                marginBottom: '16px'
               }}
             >
               {isProcessingPayment ? (
-                <span>Processing...</span>
+                <span>⏳ Processing Payment...</span>
               ) : (
                 <>
                   <span>Confirm & Pay ${grandTotal.toFixed(2)}</span>
@@ -1043,9 +1182,22 @@ function BookingForm() {
                 </>
               )}
             </button>
+
+            {/* Need support */}
+            <div style={{ textAlign: 'center', fontSize: '0.8rem', color: '#94a3b8' }}>
+              Need Support?{' '}
+              <a
+                href="/#footer-contact"
+                style={{ color: '#15803d', fontWeight: 700, textDecoration: 'none' }}
+                onClick={() => setIsPaymentModalOpen(false)}
+              >
+                Contact Us
+              </a>
+            </div>
           </div>
         </div>
       )}
+
     </div>
   );
 }

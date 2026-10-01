@@ -39,7 +39,11 @@ export default function CleanerBookingsPage() {
 
   // Filter bookings for this cleaner
   const cleanerBookings = bookings.filter(
-    (b) => b.cleanerId === cleaner.id || (!b.cleanerId && cleaner.specialties?.includes(b.serviceName))
+    (b) =>
+      b.cleanerId === cleaner.id ||
+      b.cleanerName === cleaner.name ||
+      !b.cleanerId ||
+      (cleaner.specialties && cleaner.specialties.includes(b.serviceName))
   );
 
   const handleStatusChange = (bookingId: string, nextStatus: Booking['status']) => {
@@ -155,10 +159,10 @@ export default function CleanerBookingsPage() {
                     borderRadius: '9999px',
                     fontSize: '0.8rem',
                     fontWeight: 700,
-                    backgroundColor: '#f1f5f9',
-                    color: '#0f172a'
+                    backgroundColor: b.status === 'completed' ? '#dcfce7' : (b.status === 'accepted' || (b.status as any) === 'confirmed') ? '#eff6ff' : '#f1f5f9',
+                    color: b.status === 'completed' ? '#15803d' : (b.status === 'accepted' || (b.status as any) === 'confirmed') ? '#1d4ed8' : '#0f172a'
                   }}>
-                    {b.status.replace('_', ' ').toUpperCase()}
+                    {(b.status === 'accepted' || (b.status as any) === 'confirmed') ? 'ACCEPTED' : b.status.replace('_', ' ').toUpperCase()}
                   </span>
                 </div>
 
@@ -167,9 +171,15 @@ export default function CleanerBookingsPage() {
                     <>
                       <button
                         onClick={() => handleStatusChange(b.id, 'accepted')}
-                        style={{ padding: '8px 16px', borderRadius: '9999px', backgroundColor: '#15803d', color: '#ffffff', fontSize: '0.875rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', border: 'none', cursor: 'pointer' }}
+                        style={{ padding: '8px 16px', borderRadius: '9999px', backgroundColor: '#2563eb', color: '#ffffff', fontSize: '0.875rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', border: 'none', cursor: 'pointer' }}
                       >
                         <Check size={14} /> Accept Booking
+                      </button>
+                      <button
+                        onClick={() => handleStatusChange(b.id, 'completed')}
+                        style={{ padding: '8px 16px', borderRadius: '9999px', backgroundColor: '#15803d', color: '#ffffff', fontSize: '0.875rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', border: 'none', cursor: 'pointer' }}
+                      >
+                        <CheckCircle2 size={16} /> Mark "Completed ✨"
                       </button>
                       <button
                         onClick={() => handleStatusChange(b.id, 'cancelled')}
@@ -180,22 +190,38 @@ export default function CleanerBookingsPage() {
                     </>
                   )}
 
-                  {b.status === 'accepted' && (
-                    <button
-                      onClick={() => handleStatusChange(b.id, 'on_the_way')}
-                      style={{ padding: '8px 16px', borderRadius: '9999px', backgroundColor: '#2563eb', color: '#ffffff', fontSize: '0.875rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', border: 'none', cursor: 'pointer' }}
-                    >
-                      <Car size={16} /> Mark "On The Way 🚗"
-                    </button>
+                  {(b.status === 'accepted' || (b.status as any) === 'confirmed') && (
+                    <>
+                      <button
+                        onClick={() => handleStatusChange(b.id, 'on_the_way')}
+                        style={{ padding: '8px 16px', borderRadius: '9999px', backgroundColor: '#2563eb', color: '#ffffff', fontSize: '0.875rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', border: 'none', cursor: 'pointer' }}
+                      >
+                        <Car size={16} /> Mark "On The Way 🚗"
+                      </button>
+                      <button
+                        onClick={() => handleStatusChange(b.id, 'completed')}
+                        style={{ padding: '8px 16px', borderRadius: '9999px', backgroundColor: '#15803d', color: '#ffffff', fontSize: '0.875rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', border: 'none', cursor: 'pointer' }}
+                      >
+                        <CheckCircle2 size={16} /> Mark "Completed ✨"
+                      </button>
+                    </>
                   )}
 
                   {b.status === 'on_the_way' && (
-                    <button
-                      onClick={() => handleStatusChange(b.id, 'in_progress')}
-                      style={{ padding: '8px 16px', borderRadius: '9999px', backgroundColor: '#d97706', color: '#ffffff', fontSize: '0.875rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', border: 'none', cursor: 'pointer' }}
-                    >
-                      <Sparkles size={16} /> Mark "Arrived & Started 🧹"
-                    </button>
+                    <>
+                      <button
+                        onClick={() => handleStatusChange(b.id, 'in_progress')}
+                        style={{ padding: '8px 16px', borderRadius: '9999px', backgroundColor: '#d97706', color: '#ffffff', fontSize: '0.875rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', border: 'none', cursor: 'pointer' }}
+                      >
+                        <Sparkles size={16} /> Mark "Arrived & Started 🧹"
+                      </button>
+                      <button
+                        onClick={() => handleStatusChange(b.id, 'completed')}
+                        style={{ padding: '8px 16px', borderRadius: '9999px', backgroundColor: '#15803d', color: '#ffffff', fontSize: '0.875rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', border: 'none', cursor: 'pointer' }}
+                      >
+                        <CheckCircle2 size={16} /> Mark "Completed ✨"
+                      </button>
+                    </>
                   )}
 
                   {b.status === 'in_progress' && (

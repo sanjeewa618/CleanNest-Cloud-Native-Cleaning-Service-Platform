@@ -66,3 +66,51 @@ export const getMyBookings = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ error: 'Failed to fetch bookings' });
   }
 };
+
+export const updateBookingStatus = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    let prismaStatus: any = 'PENDING';
+    const s = (status || '').toLowerCase();
+    if (s === 'accepted') prismaStatus = 'CONFIRMED';
+    else if (s === 'on_the_way') prismaStatus = 'ON_THE_WAY';
+    else if (s === 'in_progress') prismaStatus = 'IN_PROGRESS';
+    else if (s === 'completed') prismaStatus = 'COMPLETED';
+    else if (s === 'cancelled') prismaStatus = 'CANCELLED';
+    else prismaStatus = (status || '').toUpperCase();
+
+    // Check if booking exists in DB
+    const existing = await prisma.booking.findFirst({
+      where: {
+        OR: [
+          { id },
+          { id: { startsWith: id } }
+        ]
+      }
+    });
+
+    if (existing) {
+      const updatedBooking = await prisma.booking.update({
+        where: { id: existing.id },
+        data: { status: prismaStatus }
+      });
+
+      // When completed, increment cleaner's jobsCount in the DB
+      if (prismaStatus === 'COMPLETED' && existing.cleanerId) {
+        await prisma.user.update({
+          where: { id: existing.cleanerId },
+          data: { jobsCount: { increment: 1 } }
+        }).catch((err) => console.error('Failed to increment cleaner jobsCount in DB:', err));
+      }
+
+      return res.json(updatedBooking);
+    }
+
+    return res.status(200).json({ message: 'Booking status updated', id, status: prismaStatus });
+  } catch (error) {
+    console.error('Failed to update booking status in DB', error);
+    res.status(500).json({ error: 'Failed to update booking status' });
+  }
+};

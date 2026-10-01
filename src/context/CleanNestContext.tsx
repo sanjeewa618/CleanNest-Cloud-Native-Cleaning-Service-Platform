@@ -33,6 +33,21 @@ export interface NotificationItem {
   type: 'info' | 'success' | 'warning';
 }
 
+export interface CleanerAlert {
+  id: string;
+  bookingId: string;
+  cleanerId?: string;
+  customerName: string;
+  customerAddress: string;
+  serviceName: string;
+  selectedDate: string;
+  selectedTimeSlot: string;
+  totalAmount: number;
+  paymentStatus: string;
+  createdAt: string;
+  dismissed: boolean;
+}
+
 interface CleanNestContextType {
   role: UserRole;
   setRole: (role: UserRole) => void;
@@ -48,6 +63,10 @@ interface CleanNestContextType {
   notifications: NotificationItem[];
   markNotificationAsRead: (id: string) => void;
   clearNotifications: () => void;
+  // Cleaner alert inbox
+  cleanerAlerts: CleanerAlert[];
+  acceptBooking: (bookingId: string) => void;
+  rejectBooking: (bookingId: string) => void;
   // Booking operations
   createBooking: (newBooking: Omit<Booking, 'id' | 'bookingCode' | 'createdAt'>) => Promise<Booking>;
   updateBookingStatus: (bookingId: string, status: Booking['status']) => void;
@@ -109,6 +128,7 @@ export const CleanNestProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [reviews, setReviews] = useState<CustomerReview[]>(INITIAL_REVIEWS);
   const [draftBooking, setDraftBooking] = useState<Partial<Booking> | null>(null);
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
+  const [cleanerAlerts, setCleanerAlerts] = useState<CleanerAlert[]>([]);
 
   const [notifications, setNotifications] = useState<NotificationItem[]>([
     {
@@ -154,22 +174,109 @@ export const CleanNestProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           setCustomers(customersData);
         }
 
-        // Fetch bookings if logged in
-        if (token) {
-          const bookingsRes = await fetch('http://localhost:5000/api/bookings', {
-            headers: {
-              'Authorization': `Bearer ${token}`
+        // Load saved local bookings
+        let savedLocalBookings: Booking[] = [];
+        try {
+          const saved = localStorage.getItem('cleannest_local_bookings');
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed)) {
+              savedLocalBookings = parsed
+                .filter(b => !['bkg-101', 'bkg-102', 'bkg-103', 'CN-8921', 'CN-7452', 'CN-5120'].includes(b.id) && !['CN-8921', 'CN-7452', 'CN-5120'].includes(b.bookingCode))
+                .map(b => ({
+                  ...b,
+                  status: (b.status as any) === 'confirmed' ? 'accepted' : b.status
+                }));
             }
-          });
-          if (bookingsRes.ok) {
-            const bookingsData = await bookingsRes.json();
-            setBookings(bookingsData);
-          } else {
-            setBookings([]);
           }
-        } else {
-          setBookings([]);
+        } catch {
+          // ignore
         }
+
+        let backendMappedBookings: Booking[] = [];
+        if (token) {
+          try {
+            const bookingsRes = await fetch('http://localhost:5000/api/bookings', {
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            });
+            if (bookingsRes.ok) {
+              const bookingsData = await bookingsRes.json();
+              if (Array.isArray(bookingsData)) {
+                backendMappedBookings = bookingsData.map((b: any) => {
+                  const rawStatus = (b.status || 'pending').toLowerCase();
+                  let mappedStatus: Booking['status'] = 'pending';
+                  if (rawStatus === 'confirmed' || rawStatus === 'accepted') {
+                    mappedStatus = 'accepted';
+                  } else if (rawStatus === 'on_the_way') {
+                    mappedStatus = 'on_the_way';
+                  } else if (rawStatus === 'in_progress') {
+                    mappedStatus = 'in_progress';
+                  } else if (rawStatus === 'completed') {
+                    mappedStatus = 'completed';
+                  } else if (rawStatus === 'cancelled') {
+                    mappedStatus = 'cancelled';
+                  }
+
+                  return {
+                    id: b.id,
+                    bookingCode: `CN-${(b.id || '').substring(0, 4).toUpperCase() || '8821'}`,
+                    customerId: b.customerId || 'usr-cust',
+                    customerName: b.customer?.name || 'Customer',
+                    customerPhone: b.customer?.phone || '+1 (555) 019-2834',
+                    customerAddress: typeof b.address === 'object' && b.address !== null
+                      ? b.address
+                      : { street: b.address || 'Service Location', city: 'Kalutara' },
+                    serviceId: b.serviceId || 'srv-1',
+                    serviceName: b.serviceType || b.serviceName || 'Home Cleaning',
+                    packageId: b.packageId || 'pkg-1',
+                    packageName: b.packageName || 'Standard Clean',
+                    pricePerHour: b.pricePerHour || 80,
+                    hours: b.hours || 3,
+                    selectedDate: b.date ? (isNaN(new Date(b.date).getTime()) ? b.date : new Date(b.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })) : 'Today',
+                    selectedTimeSlot: b.timeSlot || '10:00 AM - 01:00 PM',
+                    cleanerId: b.cleanerId,
+                    cleanerName: b.cleaner?.name || b.cleanerName,
+                    cleanerAvatar: b.cleaner?.avatar || b.cleanerAvatar,
+                    cleanerPhone: b.cleaner?.phone || b.cleanerPhone,
+                    status: mappedStatus,
+                    subtotal: b.price || b.subtotal || 100,
+                    discount: b.discount || 0,
+                    serviceFee: b.serviceFee || 15,
+                    totalAmount: b.price || b.totalAmount || 115,
+                    paymentMethod: b.paymentMethod || 'card',
+                    paymentStatus: b.paymentStatus || 'paid',
+                    createdAt: b.createdAt || new Date().toISOString()
+                  };
+                });
+              }
+            }
+          } catch (err) {
+            console.error('Failed to fetch backend bookings', err);
+          }
+        }
+
+        // Merge: backend bookings first, then local user bookings (so local status updates take precedence!)
+        const mergedMap = new Map<string, Booking>();
+        backendMappedBookings.forEach(b => mergedMap.set(b.id, b));
+        savedLocalBookings.forEach(b => {
+          const backendBooking = mergedMap.get(b.id);
+          if (backendBooking) {
+            mergedMap.set(b.id, {
+              ...backendBooking,
+              ...b,
+              status: b.status || backendBooking.status
+            });
+          } else {
+            mergedMap.set(b.id, b);
+          }
+        });
+        INITIAL_BOOKINGS.forEach(b => {
+          if (!mergedMap.has(b.id)) mergedMap.set(b.id, b);
+        });
+
+        setBookings(Array.from(mergedMap.values()));
       } catch (err) {
         console.error('Failed to fetch API data', err);
       }
@@ -216,16 +323,38 @@ export const CleanNestProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const createBooking = async (newBookingData: Omit<Booking, 'id' | 'bookingCode' | 'createdAt'>): Promise<Booking> => {
     const token = localStorage.getItem('cleannest_token');
     
+    // Convert human-readable selectedDate (e.g. "Tomorrow, Oct 2nd") to a real ISO date
+    const parseBookingDate = (label: string): string => {
+      const today = new Date();
+      const dayLabel = label.split(',')[0].trim().toLowerCase();
+      const dayNames = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+      if (dayLabel === 'today') {
+        return today.toISOString();
+      } else if (dayLabel === 'tomorrow') {
+        const d = new Date(today); d.setDate(today.getDate() + 1); return d.toISOString();
+      } else {
+        // Find how many days ahead this weekday is
+        const targetIdx = dayNames.indexOf(dayLabel);
+        if (targetIdx >= 0) {
+          let diff = targetIdx - today.getDay();
+          if (diff <= 0) diff += 7;
+          const d = new Date(today); d.setDate(today.getDate() + diff); return d.toISOString();
+        }
+        return today.toISOString(); // fallback
+      }
+    };
+
     // Convert frontend structure to backend schema structure
     const backendData = {
       serviceType: newBookingData.serviceName,
-      date: new Date(newBookingData.selectedDate).toISOString(),
+      date: parseBookingDate(newBookingData.selectedDate),
       timeSlot: newBookingData.selectedTimeSlot,
       price: newBookingData.totalAmount,
       address: `${newBookingData.customerAddress.street}, ${newBookingData.customerAddress.city}`,
       notes: newBookingData.customerAddress.notes,
       cleanerId: newBookingData.cleanerId
     };
+
 
     if (token) {
       try {
@@ -240,14 +369,54 @@ export const CleanNestProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         
         if (res.ok) {
           const createdBackendBooking = await res.json();
-          // To keep UI happy while it waits for a refresh, we can still prepend a mapped booking
           const newBooking: Booking = {
             ...newBookingData,
             id: createdBackendBooking.id,
             bookingCode: `CN-${Math.floor(1000 + Math.random() * 9000)}`,
             createdAt: createdBackendBooking.createdAt
           };
-          setBookings(prev => [newBooking, ...prev]);
+          setBookings(prev => {
+            const updated = [newBooking, ...prev.filter(b => b.id !== newBooking.id)];
+            try {
+              const saved = localStorage.getItem('cleannest_local_bookings');
+              const local: Booking[] = saved ? JSON.parse(saved) : [];
+              localStorage.setItem('cleannest_local_bookings', JSON.stringify([newBooking, ...local.filter(b => b.id !== newBooking.id)]));
+            } catch {}
+            return updated;
+          });
+
+          // Add a cleaner alert so cleaner portal sees it
+          setCleanerAlerts((prev) => [
+            {
+              id: `alert-${Date.now()}`,
+              bookingId: newBooking.id,
+              cleanerId: newBooking.cleanerId,
+              customerName: newBooking.customerName,
+              customerAddress: `${newBooking.customerAddress.street}, ${newBooking.customerAddress.apartment ? newBooking.customerAddress.apartment + ', ' : ''}${newBooking.customerAddress.city}, ${newBooking.customerAddress.zip}`,
+              serviceName: newBooking.serviceName,
+              selectedDate: newBooking.selectedDate,
+              selectedTimeSlot: newBooking.selectedTimeSlot,
+              totalAmount: newBooking.totalAmount,
+              paymentStatus: newBooking.paymentStatus || 'paid',
+              createdAt: new Date().toISOString(),
+              dismissed: false
+            },
+            ...prev
+          ]);
+
+          // Customer notification
+          setNotifications((prev) => [
+            {
+              id: `notif-${Date.now()}`,
+              title: 'Booking Request Sent! ⏳',
+              message: `Your booking for ${newBooking.serviceName} on ${newBooking.selectedDate} is awaiting cleaner confirmation.`,
+              time: 'Just now',
+              read: false,
+              type: 'info'
+            },
+            ...prev
+          ]);
+
           return newBooking;
         }
       } catch (err) {
@@ -264,18 +433,42 @@ export const CleanNestProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       createdAt: new Date().toISOString()
     };
 
-    const updated = [newBooking, ...bookings];
+    const updated = [newBooking, ...bookings.filter(b => b.id !== newBooking.id)];
     setBookings(updated);
+    try {
+      const saved = localStorage.getItem('cleannest_local_bookings');
+      const local: Booking[] = saved ? JSON.parse(saved) : [];
+      localStorage.setItem('cleannest_local_bookings', JSON.stringify([newBooking, ...local.filter(b => b.id !== newBooking.id)]));
+    } catch {}
 
-    // Add alert notification
+    // Add a cleaner alert so cleaner portal sees it
+    setCleanerAlerts((prev) => [
+      {
+        id: `alert-${Date.now()}`,
+        bookingId: newBooking.id,
+        cleanerId: newBooking.cleanerId,
+        customerName: newBooking.customerName,
+        customerAddress: `${newBooking.customerAddress.street}, ${newBooking.customerAddress.apartment ? newBooking.customerAddress.apartment + ', ' : ''}${newBooking.customerAddress.city}, ${newBooking.customerAddress.zip}`,
+        serviceName: newBooking.serviceName,
+        selectedDate: newBooking.selectedDate,
+        selectedTimeSlot: newBooking.selectedTimeSlot,
+        totalAmount: newBooking.totalAmount,
+        paymentStatus: newBooking.paymentStatus || 'paid',
+        createdAt: new Date().toISOString(),
+        dismissed: false
+      },
+      ...prev
+    ]);
+
+    // Customer notification
     setNotifications((prev) => [
       {
         id: `notif-${Date.now()}`,
-        title: 'Booking Confirmed! 🎉',
-        message: `Your booking for ${newBooking.serviceName} (${newBooking.packageName}) has been scheduled.`,
+        title: 'Booking Request Sent! ⏳',
+        message: `Your booking for ${newBooking.serviceName} on ${newBooking.selectedDate} is awaiting cleaner confirmation.`,
         time: 'Just now',
         read: false,
-        type: 'success'
+        type: 'info'
       },
       ...prev
     ]);
@@ -283,95 +476,9 @@ export const CleanNestProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return newBooking;
   };
 
-  const updateBookingStatus = (bookingId: string, status: Booking['status']) => {
-    setBookings((prev) =>
-      prev.map((b) => {
-        if (b.id === bookingId) {
-          return { ...b, status };
-        }
-        return b;
-      })
-    );
 
-    // Notify user
-    const statusLabels: Record<Booking['status'], string> = {
-      pending: 'Pending Cleaner Confirmation',
-      accepted: 'Booking Accepted by Cleaner',
-      on_the_way: 'Cleaner is on the way 🚗',
-      in_progress: 'Cleaning job started 🧹',
-      completed: 'Cleaning completed successfully ✨',
-      cancelled: 'Booking was cancelled'
-    };
 
-    setNotifications((prev) => [
-      {
-        id: `notif-${Date.now()}`,
-        title: `Booking Update`,
-        message: statusLabels[status] || `Status updated to ${status}`,
-        time: 'Just now',
-        read: false,
-        type: status === 'cancelled' ? 'warning' : 'info'
-      },
-      ...prev
-    ]);
-  };
 
-  const cancelBooking = (bookingId: string) => {
-    updateBookingStatus(bookingId, 'cancelled');
-  };
-
-  const rescheduleBooking = (bookingId: string, newDate: string, newTime: string) => {
-    setBookings((prev) =>
-      prev.map((b) => {
-        if (b.id === bookingId) {
-          return {
-            ...b,
-            selectedDate: newDate,
-            selectedTimeSlot: newTime,
-            status: 'accepted'
-          };
-        }
-        return b;
-      })
-    );
-
-    setNotifications((prev) => [
-      {
-        id: `notif-${Date.now()}`,
-        title: 'Booking Rescheduled',
-        message: `Your booking was moved to ${newDate} (${newTime}).`,
-        time: 'Just now',
-        read: false,
-        type: 'info'
-      },
-      ...prev
-    ]);
-  };
-
-  const submitReview = (bookingId: string, rating: number, comment: string) => {
-    setBookings((prev) =>
-      prev.map((b) => {
-        if (b.id === bookingId) {
-          return { ...b, rating, reviewComment: comment };
-        }
-        return b;
-      })
-    );
-
-    const booking = bookings.find((b) => b.id === bookingId);
-    if (booking) {
-      const newReview: CustomerReview = {
-        id: `rev-${Date.now()}`,
-        customerName: booking.customerName || 'Alex Morgan',
-        avatar: currentUser.avatar,
-        rating,
-        date: 'Today',
-        comment,
-        serviceName: booking.serviceName
-      };
-      setReviews((prev) => [newReview, ...prev]);
-    }
-  };
 
   const toggleCleanerOnline = (cleanerId: string) => {
     setCleaners((prev) =>
@@ -464,6 +571,179 @@ export const CleanNestProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setNotifications([]);
   };
 
+  const updateBookingStatus = (bookingId: string, status: Booking['status']) => {
+    let targetBooking: Booking | undefined = bookings.find((b) => b.id === bookingId);
+
+    setBookings((prev) => {
+      const found = prev.find((b) => b.id === bookingId);
+      if (found) targetBooking = found;
+      const updated = prev.map((b) => (b.id === bookingId ? { ...b, status } : b));
+      try {
+        localStorage.setItem('cleannest_local_bookings', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+
+    if (status === 'accepted' || status === 'cancelled' || status === 'completed') {
+      setCleanerAlerts((prev) =>
+        prev.map((a) => (a.bookingId === bookingId ? { ...a, dismissed: true } : a))
+      );
+    }
+
+    // Immediately update cleaner's completed job count and earnings when marked completed
+    if (status === 'completed') {
+      const payout = (targetBooking?.totalAmount || 0) * 0.85;
+      setCleaners((prev) =>
+        prev.map((c) => {
+          const isTarget =
+            (targetBooking?.cleanerId && c.id === targetBooking.cleanerId) ||
+            (targetBooking?.cleanerName && c.name === targetBooking.cleanerName) ||
+            (currentUser?.id === c.id);
+          if (isTarget) {
+            return {
+              ...c,
+              jobsCompleted: (c.jobsCompleted || 0) + 1,
+              earnings: {
+                today: (c.earnings?.today || 0) + payout,
+                thisWeek: (c.earnings?.thisWeek || 0) + payout,
+                total: (c.earnings?.total || 0) + payout,
+              }
+            };
+          }
+          return c;
+        })
+      );
+    }
+
+    // Update in backend database (with or without JWT token)
+    const token = typeof window !== 'undefined' ? localStorage.getItem('cleannest_token') : null;
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json'
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    fetch(`http://localhost:5000/api/bookings/${bookingId}/status`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({ status })
+    })
+      .then((res) => {
+        if (!res.ok) {
+          console.warn('DB booking status update status:', res.status);
+        }
+      })
+      .catch((err) => console.error('Failed to update status in DB', err));
+
+    const cleanerName = targetBooking?.cleanerName || 'Your cleaner';
+    const serviceName = targetBooking?.serviceName || 'Cleaning Service';
+    const dateStr = targetBooking?.selectedDate || 'the scheduled date';
+    const timeStr = targetBooking?.selectedTimeSlot ? ` (${targetBooking.selectedTimeSlot})` : '';
+
+    let title = 'Booking Status Updated 🔔';
+    let message = `Your booking for ${serviceName} status changed to ${status.replace('_', ' ')}.`;
+    let type: 'info' | 'success' | 'warning' = 'info';
+
+    if (status === 'accepted') {
+      title = '✅ Booking Accepted!';
+      message = `Great news! ${cleanerName} has accepted your ${serviceName} booking for ${dateStr}${timeStr}. They will arrive on time!`;
+      type = 'success';
+    } else if (status === 'on_the_way') {
+      title = '🚗 Cleaner On The Way!';
+      message = `${cleanerName} is on the way to your location for ${serviceName}!`;
+      type = 'info';
+    } else if (status === 'in_progress') {
+      title = '🧹 Cleaning Started!';
+      message = `${cleanerName} has arrived and started working on ${serviceName}.`;
+      type = 'info';
+    } else if (status === 'completed') {
+      title = '✨ Cleaning Completed!';
+      message = `Your ${serviceName} by ${cleanerName} is complete! Thank you for choosing CleanNest.`;
+      type = 'success';
+    } else if (status === 'cancelled') {
+      title = '❌ Booking Cancelled';
+      message = `Your booking for ${serviceName} has been cancelled.`;
+      type = 'warning';
+    }
+
+    setNotifications((prev) => [
+      {
+        id: `notif-${Date.now()}`,
+        title,
+        message,
+        time: 'Just now',
+        read: false,
+        type
+      },
+      ...prev
+    ]);
+  };
+
+  const acceptBooking = (bookingId: string) => {
+    updateBookingStatus(bookingId, 'accepted');
+  };
+
+  const rejectBooking = (bookingId: string) => {
+    updateBookingStatus(bookingId, 'cancelled');
+  };
+
+  const cancelBooking = (bookingId: string) => {
+    updateBookingStatus(bookingId, 'cancelled');
+  };
+
+  const rescheduleBooking = (bookingId: string, newDate: string, newTime: string) => {
+    setBookings((prev) => {
+      const updated = prev.map((b) =>
+        b.id === bookingId
+          ? { ...b, selectedDate: newDate, selectedTimeSlot: newTime }
+          : b
+      );
+      try {
+        localStorage.setItem('cleannest_local_bookings', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+
+    setNotifications((prev) => [
+      {
+        id: `notif-${Date.now()}`,
+        title: '📅 Booking Rescheduled',
+        message: `Your booking has been updated to ${newDate} (${newTime}).`,
+        time: 'Just now',
+        read: false,
+        type: 'info'
+      },
+      ...prev
+    ]);
+  };
+
+  const submitReview = (bookingId: string, rating: number, comment: string) => {
+    setBookings((prev) => {
+      const updated = prev.map((b) =>
+        b.id === bookingId ? { ...b, rating, reviewComment: comment } : b
+      );
+      try {
+        localStorage.setItem('cleannest_local_bookings', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+
+    const booking = bookings.find((b) => b.id === bookingId);
+    if (booking) {
+      const newReview: CustomerReview = {
+        id: `rev-${Date.now()}`,
+        customerName: booking.customerName || currentUser.name || 'Customer',
+        avatar: currentUser.avatar,
+        rating,
+        date: 'Today',
+        comment,
+        serviceName: booking.serviceName
+      };
+      setReviews((prev) => [newReview, ...prev]);
+    }
+  };
+
   return (
     <CleanNestContext.Provider
       value={{
@@ -481,6 +761,9 @@ export const CleanNestProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         notifications,
         markNotificationAsRead,
         clearNotifications,
+        cleanerAlerts,
+        acceptBooking,
+        rejectBooking,
         createBooking,
         updateBookingStatus,
         cancelBooking,
