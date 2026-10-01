@@ -261,7 +261,7 @@ export default function ProfilePage() {
                         </div>
                       </div>
                       <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0f172a' }}>${booking.totalAmount.toFixed(2)}</div>
+                        <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0f172a' }}>Rs. {booking.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                       </div>
                     </div>
                   </Link>

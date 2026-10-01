@@ -68,7 +68,7 @@ export default function CleanerAnalyticsPage() {
             <DollarSign size={20} color="#15803d" />
           </div>
           <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#15803d' }}>
-            ${todayEarnings.toFixed(2)}
+            Rs. {todayEarnings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <div style={{ fontSize: '0.85rem', color: '#16a34a', fontWeight: 600, marginTop: '8px' }}>
             +{completedJobs.length} completed jobs
@@ -87,7 +87,7 @@ export default function CleanerAnalyticsPage() {
             <TrendingUp size={20} color="#0284c7" />
           </div>
           <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#0f172a' }}>
-            ${thisWeekEarnings.toFixed(2)}
+            Rs. {thisWeekEarnings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '8px' }}>
             Payout scheduled for Monday
@@ -106,7 +106,7 @@ export default function CleanerAnalyticsPage() {
             <BarChart2 size={20} color="#f59e0b" />
           </div>
           <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#0f172a' }}>
-            ${totalLifetimeEarnings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            Rs. {totalLifetimeEarnings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '8px' }}>
             Direct bank deposit verified
@@ -179,7 +179,7 @@ export default function CleanerAnalyticsPage() {
             };
           });
 
-          const maxAmount = Math.max(...dailyData.map(d => d.amount), 150);
+          const maxAmount = Math.max(...dailyData.map(d => d.amount), 5000);
 
           return (
             <div>
@@ -202,10 +202,10 @@ export default function CleanerAnalyticsPage() {
                         color: d.isToday ? '#15803d' : '#64748b',
                         opacity: d.amount > 0 ? 1 : 0.3
                       }}>
-                        ${d.amount.toFixed(0)}
+                        Rs. {d.amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                       </span>
                       <div
-                        title={`${d.day}: $${d.amount.toFixed(2)}`}
+                        title={`${d.day}: Rs. ${d.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                         style={{
                           width: '100%',
                           maxWidth: '56px',
@@ -246,7 +246,7 @@ export default function CleanerAnalyticsPage() {
           <div>
             <div style={{ color: '#64748b', fontSize: '0.8rem', fontWeight: 600 }}>Avg. Payout per Job</div>
             <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', marginTop: '4px' }}>
-              ${completedJobs.length > 0 ? (completedEarningsTotal / completedJobs.length).toFixed(2) : '0.00'}
+              Rs. {completedJobs.length > 0 ? (completedEarningsTotal / completedJobs.length).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
             </div>
           </div>
           <div>
@@ -258,7 +258,7 @@ export default function CleanerAnalyticsPage() {
           <div>
             <div style={{ color: '#64748b', fontSize: '0.8rem', fontWeight: 600 }}>Net Take-Home</div>
             <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', marginTop: '4px' }}>
-              ${thisWeekEarnings.toFixed(2)}
+              Rs. {thisWeekEarnings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
           </div>
         </div>
@@ -305,7 +305,7 @@ export default function CleanerAnalyticsPage() {
 
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontWeight: 800, fontSize: '1.25rem', color: '#15803d', marginBottom: '4px' }}>
-                    +${(b.totalAmount * 0.85).toFixed(2)}
+                    +Rs. {(b.totalAmount * 0.85).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: '#16a34a', fontWeight: 700 }}>
                     Paid to Checking ••••4920

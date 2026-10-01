@@ -13,19 +13,18 @@ import {
   User,
   Calendar,
   Shield,
+  ShieldCheck,
   Menu,
   X,
   CheckCircle2,
   Trash2,
   LogOut
 } from 'lucide-react';
-import { LocationModal } from './LocationModal';
 
 export const Navbar: React.FC = () => {
   const {
     role,
     currentUser,
-    currentLocation,
     bookings,
     notifications,
     markNotificationAsRead,
@@ -34,7 +33,6 @@ export const Navbar: React.FC = () => {
     logout
   } = useCleanNest();
 
-  const [isLocationModalOpen, setLocationModalOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -142,26 +140,35 @@ export const Navbar: React.FC = () => {
               </div>
             </Link>
 
-            {/* Location Selector (matches Screen 2: New York, NY ⌄) */}
-            <button
-              onClick={() => setLocationModalOpen(true)}
+            {/* Trust & Verification Pill Badge */}
+            <div
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '6px',
-                backgroundColor: '#f8fafc',
+                gap: '8px',
+                backgroundColor: '#f0fdf4',
                 padding: '6px 14px',
                 borderRadius: '9999px',
-                border: '1px solid #e2e8f0',
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                color: '#334155'
+                border: '1px solid #bbf7d0',
+                fontSize: '0.8125rem',
+                fontWeight: 700,
+                color: '#15803d',
+                boxShadow: '0 1px 3px rgba(21, 128, 61, 0.08)'
               }}
+              title="All CleanNest professionals are verified, vetted and background checked"
             >
-              <MapPin size={16} color="var(--primary)" />
-              <span>{currentLocation}</span>
-              <ChevronDown size={14} color="#94a3b8" />
-            </button>
+              <ShieldCheck size={16} color="#15803d" />
+              <span>Verified & Insured</span>
+              <span
+                style={{
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  backgroundColor: '#22c55e',
+                  display: 'inline-block'
+                }}
+              />
+            </div>
           </div>
 
           {/* Center Links (Desktop) */}
@@ -462,11 +469,6 @@ export const Navbar: React.FC = () => {
           </div>
         )}
       </nav>
-
-      <LocationModal
-        isOpen={isLocationModalOpen}
-        onClose={() => setLocationModalOpen(false)}
-      />
 
       <style jsx>{`
         @media (max-width: 900px) {

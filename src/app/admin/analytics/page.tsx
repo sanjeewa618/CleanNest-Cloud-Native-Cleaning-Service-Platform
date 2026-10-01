@@ -35,7 +35,7 @@ export default function AdminAnalyticsPage() {
             <div style={{ fontSize: '0.875rem', fontWeight: 600, color: '#64748b' }}>Total Revenue</div>
             <DollarSign size={20} color="#16a34a" />
           </div>
-          <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#0f172a' }}>${totalRevenue.toLocaleString()}</div>
+          <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#0f172a' }}>Rs. {totalRevenue.toLocaleString()}</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.875rem', color: '#16a34a', marginTop: '8px', fontWeight: 600 }}>
             <TrendingUp size={16} /> +12.5% this month
           </div>
@@ -70,14 +70,14 @@ export default function AdminAnalyticsPage() {
         {/* Dynamic Chart UI */}
         {(() => {
           const baseMonths = [
-            { month: 'Jan', amount: 450 },
-            { month: 'Feb', amount: 620 },
-            { month: 'Mar', amount: 510 },
-            { month: 'Apr', amount: 840 },
-            { month: 'May', amount: 720 },
-            { month: 'Jun', amount: Math.max(totalRevenue, 950) },
+            { month: 'Jan', amount: 280000 },
+            { month: 'Feb', amount: 340000 },
+            { month: 'Mar', amount: 310000 },
+            { month: 'Apr', amount: 450000 },
+            { month: 'May', amount: 410000 },
+            { month: 'Jun', amount: Math.max(totalRevenue, 480000) },
           ];
-          const maxMonthVal = Math.max(...baseMonths.map(m => m.amount), 1000);
+          const maxMonthVal = Math.max(...baseMonths.map(m => m.amount), 500000);
 
           return (
             <div>
@@ -88,10 +88,10 @@ export default function AdminAnalyticsPage() {
                   return (
                     <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, gap: '10px' }}>
                       <span style={{ fontSize: '0.75rem', fontWeight: 700, color: isCurrent ? '#16a34a' : '#64748b' }}>
-                        ${bar.amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                        Rs. {bar.amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                       </span>
                       <div
-                        title={`${bar.month}: $${bar.amount.toFixed(2)}`}
+                        title={`${bar.month}: Rs. ${bar.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                         style={{ 
                           width: '100%', 
                           maxWidth: '60px', 

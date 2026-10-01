@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCleanNest } from '@/context/CleanNestContext';
+import { ServiceItem } from '@/data/mockData';
 import {
   Check,
   Clock,
@@ -10,7 +11,14 @@ import {
   ShieldCheck,
   Edit2,
   Save,
-  X
+  X,
+  Tag,
+  DollarSign,
+  Percent,
+  Sparkles,
+  CheckCircle2,
+  TrendingDown,
+  ChevronRight
 } from 'lucide-react';
 
 export default function CleanerProfilePage() {
@@ -19,6 +27,7 @@ export default function CleanerProfilePage() {
     services,
     updateCleanerServices,
     updateCleanerProfile,
+    updateServicePriceAndDiscount,
     currentUser,
     isInitialized
   } = useCleanNest();
@@ -33,6 +42,15 @@ export default function CleanerProfilePage() {
     phone: '',
     avatar: ''
   });
+
+  // Service Pricing & Discount State
+  const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
+  const [editPricingForm, setEditPricingForm] = useState<{
+    basePrice: number;
+    discountPercent: number;
+    packages: { id: string; name: string; pricePerHour: number }[];
+  } | null>(null);
+  const [pricingSaveSuccess, setPricingSaveSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     if (cleaner && !isEditingProfile) {
@@ -68,6 +86,42 @@ export default function CleanerProfilePage() {
     setIsEditingProfile(false);
   };
 
+  const handleStartEditPricing = (srv: ServiceItem) => {
+    setEditingServiceId(srv.id);
+    setEditPricingForm({
+      basePrice: srv.basePrice,
+      discountPercent: srv.discountPercent || 0,
+      packages: srv.packages.map(p => ({
+        id: p.id,
+        name: p.name,
+        pricePerHour: p.pricePerHour
+      }))
+    });
+  };
+
+  const handleSavePricing = (serviceId: string) => {
+    if (!editPricingForm) return;
+    const targetService = services.find(s => s.id === serviceId);
+    if (!targetService) return;
+
+    const updatedPackages = targetService.packages.map(pkg => {
+      const match = editPricingForm.packages.find(p => p.id === pkg.id);
+      return match ? { ...pkg, pricePerHour: match.pricePerHour } : pkg;
+    });
+
+    updateServicePriceAndDiscount(
+      serviceId,
+      editPricingForm.basePrice,
+      editPricingForm.discountPercent,
+      updatedPackages
+    );
+
+    setEditingServiceId(null);
+    setEditPricingForm(null);
+    setPricingSaveSuccess(targetService.name);
+    setTimeout(() => setPricingSaveSuccess(null), 4000);
+  };
+
   const inputStyle = {
     padding: '10px 14px',
     borderRadius: '10px',
@@ -81,11 +135,35 @@ export default function CleanerProfilePage() {
   return (
     <div>
       <div style={{ marginBottom: '32px' }}>
-        <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#0f172a' }}>My Profile</h1>
+        <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#0f172a' }}>My Profile & Rates</h1>
         <p style={{ color: '#64748b', fontSize: '1rem' }}>
-          Manage your personal details, specialties, and working slots.
+          Manage your personal details, accepted specialties, hourly rates, and customer promotional discounts.
         </p>
       </div>
+
+      {pricingSaveSuccess && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          backgroundColor: '#dcfce7',
+          border: '1px solid #86efac',
+          borderRadius: '16px',
+          padding: '16px 20px',
+          marginBottom: '24px',
+          color: '#14532d',
+          fontWeight: 600,
+          boxShadow: '0 4px 12px rgba(21, 128, 61, 0.1)'
+        }}>
+          <CheckCircle2 size={22} color="#15803d" />
+          <div>
+            <strong>Pricing & Discount Updated!</strong>
+            <div style={{ fontSize: '0.85rem', fontWeight: 500, color: '#166534', marginTop: '2px' }}>
+              Your new hourly rates and discounts for <strong>{pricingSaveSuccess}</strong> are now live on the customer app and booking checkout.
+            </div>
+          </div>
+        </div>
+      )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
         
@@ -202,6 +280,344 @@ export default function CleanerProfilePage() {
           )}
         </div>
 
+        {/* NEW: Service Pricing & Discounts Configuration */}
+        <div style={{
+          backgroundColor: '#ffffff',
+          borderRadius: '24px',
+          padding: '32px',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.03)'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '12px' }}>
+            <div>
+              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                <Tag size={24} color="#15803d" /> Service Pricing & Promotional Discounts
+              </h2>
+              <p style={{ color: '#64748b', fontSize: '0.9rem', marginTop: '4px', marginBottom: 0 }}>
+                Set your custom hourly rates and add special discounts to attract more bookings. Changes instantly update on customer service pages and checkout.
+              </p>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginTop: '24px' }}>
+            {services.map((srv) => {
+              const isSpecialty = (cleaner.specialties || []).includes(srv.name);
+              const isEditing = editingServiceId === srv.id;
+              const discount = srv.discountPercent || 0;
+              const discountedBase = discount > 0 ? Math.round(srv.basePrice * (1 - discount / 100)) : srv.basePrice;
+
+              return (
+                <div
+                  key={srv.id}
+                  style={{
+                    borderRadius: '20px',
+                    border: isEditing ? '2px solid #22c55e' : '1px solid #e2e8f0',
+                    backgroundColor: isEditing ? '#fcfdfd' : '#f8fafc',
+                    padding: '24px',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                      <img
+                        src={srv.image}
+                        alt={srv.name}
+                        style={{ width: '64px', height: '64px', borderRadius: '16px', objectFit: 'cover' }}
+                      />
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <span style={{ fontWeight: 800, fontSize: '1.2rem', color: '#0f172a' }}>{srv.name}</span>
+                          {isSpecialty && (
+                            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#15803d', backgroundColor: '#dcfce7', padding: '3px 10px', borderRadius: '9999px' }}>
+                              Offered By You
+                            </span>
+                          )}
+                        </div>
+                        
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '6px', flexWrap: 'wrap' }}>
+                          <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+                            <span style={{ fontSize: '0.85rem', color: '#64748b' }}>Base Hourly:</span>
+                            {discount > 0 ? (
+                              <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+                                <span style={{ fontWeight: 800, color: '#15803d', fontSize: '1.15rem' }}>
+                                  Rs. {discountedBase.toLocaleString()}/hr
+                                </span>
+                                <span style={{ textDecoration: 'line-through', color: '#94a3b8', fontSize: '0.85rem' }}>
+                                  Rs. {srv.basePrice.toLocaleString()}
+                                </span>
+                              </div>
+                            ) : (
+                              <span style={{ fontWeight: 800, color: '#0f172a', fontSize: '1.15rem' }}>
+                                Rs. {srv.basePrice.toLocaleString()}/hr
+                              </span>
+                            )}
+                          </div>
+
+                          {discount > 0 ? (
+                            <span style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              backgroundColor: '#fef08a',
+                              color: '#854d0e',
+                              fontSize: '0.8rem',
+                              fontWeight: 700,
+                              padding: '2px 10px',
+                              borderRadius: '8px'
+                            }}>
+                              <Percent size={13} /> {discount}% Active Discount
+                            </span>
+                          ) : (
+                            <span style={{ fontSize: '0.8rem', color: '#94a3b8', backgroundColor: '#f1f5f9', padding: '2px 8px', borderRadius: '6px' }}>
+                              No discount active
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {!isEditing && (
+                      <button
+                        onClick={() => handleStartEditPricing(srv)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '10px 18px',
+                          borderRadius: '12px',
+                          backgroundColor: '#15803d',
+                          color: '#ffffff',
+                          fontWeight: 700,
+                          fontSize: '0.875rem',
+                          border: 'none',
+                          cursor: 'pointer',
+                          boxShadow: '0 2px 8px rgba(21, 128, 61, 0.2)'
+                        }}
+                      >
+                        <Edit2 size={15} /> Edit Price & Discounts
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Pricing Edit Form */}
+                  {isEditing && editPricingForm && (
+                    <div style={{
+                      marginTop: '24px',
+                      paddingTop: '20px',
+                      borderTop: '1px solid #e2e8f0',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '20px'
+                    }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
+                        {/* Base Price input */}
+                        <div style={{ backgroundColor: '#ffffff', padding: '16px', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.875rem', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>
+                            <DollarSign size={16} color="#15803d" /> Base Hourly Rate (Rs.)
+                          </label>
+                          <input
+                            type="number"
+                            min="500"
+                            step="50"
+                            value={editPricingForm.basePrice}
+                            onChange={(e) => setEditPricingForm({ ...editPricingForm, basePrice: Number(e.target.value) || 0 })}
+                            style={{
+                              padding: '10px 14px',
+                              borderRadius: '10px',
+                              border: '1.5px solid #cbd5e1',
+                              width: '100%',
+                              fontSize: '1rem',
+                              fontWeight: 700,
+                              color: '#0f172a'
+                            }}
+                          />
+                          <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '6px' }}>
+                            Standard starting rate per hour for this service.
+                          </div>
+                        </div>
+
+                        {/* Discount Percentage selector */}
+                        <div style={{ backgroundColor: '#ffffff', padding: '16px', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.875rem', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>
+                            <Percent size={16} color="#f59e0b" /> Promotional Discount (%)
+                          </label>
+
+                          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                            {[0, 5, 10, 15, 20, 25, 30].map((pct) => (
+                              <button
+                                key={pct}
+                                type="button"
+                                onClick={() => setEditPricingForm({ ...editPricingForm, discountPercent: pct })}
+                                style={{
+                                  padding: '4px 10px',
+                                  borderRadius: '8px',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 700,
+                                  border: editPricingForm.discountPercent === pct ? '2px solid #15803d' : '1px solid #e2e8f0',
+                                  backgroundColor: editPricingForm.discountPercent === pct ? '#dcfce7' : '#ffffff',
+                                  color: editPricingForm.discountPercent === pct ? '#14532d' : '#475569',
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                {pct === 0 ? 'No Discount' : `${pct}% OFF`}
+                              </button>
+                            ))}
+                          </div>
+
+                          <input
+                            type="number"
+                            min="0"
+                            max="80"
+                            value={editPricingForm.discountPercent}
+                            onChange={(e) => setEditPricingForm({ ...editPricingForm, discountPercent: Math.min(80, Math.max(0, Number(e.target.value) || 0)) })}
+                            style={{
+                              padding: '8px 12px',
+                              borderRadius: '10px',
+                              border: '1.5px solid #cbd5e1',
+                              width: '100%',
+                              fontSize: '0.95rem',
+                              fontWeight: 700,
+                              color: '#0f172a'
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Package Tiers Custom Pricing */}
+                      <div style={{ backgroundColor: '#ffffff', padding: '20px', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+                        <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#0f172a', marginBottom: '12px' }}>
+                          Package Tier Rates (per hour)
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px' }}>
+                          {editPricingForm.packages.map((pkg, pIdx) => {
+                            const discRate = editPricingForm.discountPercent > 0
+                              ? Math.round(pkg.pricePerHour * (1 - editPricingForm.discountPercent / 100))
+                              : pkg.pricePerHour;
+                            return (
+                              <div key={pkg.id} style={{ padding: '12px', borderRadius: '12px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                                <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                                  {pkg.name} Tier
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  <span style={{ fontSize: '0.85rem', color: '#64748b' }}>Rs.</span>
+                                  <input
+                                    type="number"
+                                    min="500"
+                                    step="50"
+                                    value={pkg.pricePerHour}
+                                    onChange={(e) => {
+                                      const val = Number(e.target.value) || 0;
+                                      const updated = [...editPricingForm.packages];
+                                      updated[pIdx] = { ...updated[pIdx], pricePerHour: val };
+                                      setEditPricingForm({ ...editPricingForm, packages: updated });
+                                    }}
+                                    style={{
+                                      padding: '6px 10px',
+                                      borderRadius: '8px',
+                                      border: '1px solid #cbd5e1',
+                                      width: '100%',
+                                      fontSize: '0.95rem',
+                                      fontWeight: 700
+                                    }}
+                                  />
+                                </div>
+                                {editPricingForm.discountPercent > 0 && (
+                                  <div style={{ fontSize: '0.75rem', color: '#15803d', fontWeight: 600, marginTop: '6px' }}>
+                                    Customers pay: Rs. {discRate.toLocaleString()}/hr
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Live Customer Preview Box */}
+                      <div style={{
+                        backgroundColor: '#f0fdf4',
+                        border: '1px solid #86efac',
+                        borderRadius: '16px',
+                        padding: '16px 20px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        flexWrap: 'wrap',
+                        gap: '12px'
+                      }}>
+                        <div>
+                          <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#166534', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                            Customer Live View Preview
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginTop: '4px' }}>
+                            <span style={{ fontSize: '1.25rem', fontWeight: 800, color: '#14532d' }}>
+                              Rs. {(editPricingForm.discountPercent > 0
+                                ? Math.round(editPricingForm.basePrice * (1 - editPricingForm.discountPercent / 100))
+                                : editPricingForm.basePrice).toLocaleString()}/hr
+                            </span>
+                            {editPricingForm.discountPercent > 0 && (
+                              <span style={{ textDecoration: 'line-through', color: '#64748b', fontSize: '0.9rem' }}>
+                                Rs. {editPricingForm.basePrice.toLocaleString()}
+                              </span>
+                            )}
+                            {editPricingForm.discountPercent > 0 && (
+                              <span style={{ backgroundColor: '#15803d', color: '#ffffff', fontSize: '0.75rem', fontWeight: 700, padding: '2px 8px', borderRadius: '6px' }}>
+                                {editPricingForm.discountPercent}% OFF
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                          <button
+                            onClick={() => handleSavePricing(srv.id)}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              padding: '10px 20px',
+                              borderRadius: '12px',
+                              backgroundColor: '#15803d',
+                              color: '#ffffff',
+                              fontWeight: 700,
+                              fontSize: '0.9rem',
+                              border: 'none',
+                              cursor: 'pointer',
+                              boxShadow: '0 4px 12px rgba(21, 128, 61, 0.2)'
+                            }}
+                          >
+                            <Save size={16} /> Save & Apply Rate
+                          </button>
+                          <button
+                            onClick={() => {
+                              setEditingServiceId(null);
+                              setEditPricingForm(null);
+                            }}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              padding: '10px 16px',
+                              borderRadius: '12px',
+                              backgroundColor: '#ffffff',
+                              color: '#64748b',
+                              fontWeight: 600,
+                              fontSize: '0.9rem',
+                              border: '1px solid #cbd5e1',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            <X size={16} /> Cancel
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Services & Specialties */}
         <div style={{
           backgroundColor: '#ffffff',
@@ -224,6 +640,8 @@ export default function CleanerProfilePage() {
           }}>
             {services.map((srv) => {
               const isSelected = (cleaner.specialties || []).includes(srv.name);
+              const discount = srv.discountPercent || 0;
+              const discountedBase = discount > 0 ? Math.round(srv.basePrice * (1 - discount / 100)) : srv.basePrice;
               return (
                 <div
                   key={srv.id}
@@ -244,8 +662,13 @@ export default function CleanerProfilePage() {
                     <div style={{ fontWeight: 700, fontSize: '1rem', color: '#0f172a' }}>
                       {srv.name}
                     </div>
-                    <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '2px' }}>
-                      Base rate: ${srv.basePrice}/hr
+                    <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>Rate: Rs. {discountedBase.toLocaleString()}/hr</span>
+                      {discount > 0 && (
+                        <span style={{ color: '#854d0e', backgroundColor: '#fef08a', padding: '1px 6px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 700 }}>
+                          {discount}% OFF
+                        </span>
+                      )}
                     </div>
                   </div>
 

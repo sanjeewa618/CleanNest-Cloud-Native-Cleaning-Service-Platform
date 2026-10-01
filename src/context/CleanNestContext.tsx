@@ -9,7 +9,8 @@ import {
   INITIAL_CLEANERS,
   INITIAL_REVIEWS,
   INITIAL_SERVICES,
-  ServiceItem
+  ServiceItem,
+  ServicePackage
 } from '@/data/mockData';
 
 export type UserRole = 'customer' | 'cleaner' | 'admin';
@@ -77,9 +78,10 @@ interface CleanNestContextType {
   toggleCleanerOnline: (cleanerId: string) => void;
   updateCleanerServices: (cleanerId: string, specialties: string[]) => void;
   updateCleanerProfile: (cleanerId: string, data: Partial<Cleaner>) => void;
-  // Admin operations
+  // Admin & Cleaner Service Pricing & Discount operations
   updateCleanerStatus: (cleanerId: string, status: 'ACTIVE' | 'PENDING' | 'REJECTED' | 'SUSPENDED') => void;
   updateServicePackagePrice: (serviceId: string, packageId: string, newPrice: number) => void;
+  updateServicePriceAndDiscount: (serviceId: string, basePrice: number, discountPercent: number, packages?: ServicePackage[]) => void;
   addNewService: (service: ServiceItem) => void;
   // Draft / active booking state for multi-step checkout
   draftBooking: Partial<Booking> | null;
@@ -272,11 +274,45 @@ export const CleanNestProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             mergedMap.set(b.id, b);
           }
         });
-        INITIAL_BOOKINGS.forEach(b => {
-          if (!mergedMap.has(b.id)) mergedMap.set(b.id, b);
+        const allBookings = Array.from(mergedMap.values());
+        let activeServices = INITIAL_SERVICES;
+        try {
+          const savedServices = localStorage.getItem('cleannest_services');
+          if (savedServices) {
+            const parsedServices = JSON.parse(savedServices);
+            if (Array.isArray(parsedServices) && parsedServices.length > 0) {
+              activeServices = parsedServices;
+              setServices(parsedServices);
+            }
+          }
+        } catch {}
+
+        // Sync existing booking prices and totals with active service rates
+        const syncedBookings = allBookings.map((b) => {
+          const srv = activeServices.find((s) => s.id === b.serviceId || s.name === b.serviceName);
+          if (!srv) return b;
+          const pkg = srv.packages?.find((p) => p.id === b.packageId || p.name === b.packageName);
+          const pkgRate = pkg ? pkg.pricePerHour : srv.basePrice;
+          const discountPercent = srv.discountPercent || 0;
+          const effectiveRate = discountPercent > 0
+            ? Math.round(pkgRate * (1 - discountPercent / 100))
+            : pkgRate;
+          const hours = b.hours || 3;
+          const newSubtotal = effectiveRate * hours;
+          const serviceFee = b.serviceFee || 450;
+          const newTotalAmount = newSubtotal + serviceFee;
+          const newDiscount = discountPercent > 0 ? (pkgRate * hours - newSubtotal) : (b.discount || 0);
+
+          return {
+            ...b,
+            pricePerHour: effectiveRate,
+            subtotal: newSubtotal,
+            discount: newDiscount,
+            totalAmount: newTotalAmount
+          };
         });
 
-        setBookings(Array.from(mergedMap.values()));
+        setBookings(syncedBookings);
       } catch (err) {
         console.error('Failed to fetch API data', err);
       }
@@ -542,8 +578,8 @@ export const CleanNestProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const updateServicePackagePrice = (serviceId: string, packageId: string, newPrice: number) => {
-    setServices((prev) =>
-      prev.map((s) => {
+    setServices((prev) => {
+      const updated = prev.map((s) => {
         if (s.id === serviceId) {
           return {
             ...s,
@@ -553,12 +589,109 @@ export const CleanNestProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           };
         }
         return s;
-      })
-    );
+      });
+      try {
+        localStorage.setItem('cleannest_services', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+  };
+
+  const updateServicePriceAndDiscount = (
+    serviceId: string,
+    basePrice: number,
+    discountPercent: number,
+    packages?: ServicePackage[]
+  ) => {
+    let targetServiceName = '';
+
+    setServices((prev) => {
+      const updated = prev.map((s) => {
+        if (s.id === serviceId) {
+          targetServiceName = s.name;
+          return {
+            ...s,
+            basePrice,
+            discountPercent,
+            packages: packages || s.packages
+          };
+        }
+        return s;
+      });
+      try {
+        localStorage.setItem('cleannest_services', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+
+    // Automatically recalculate and update existing bookings with the new prices & discounts
+    setBookings((prevBookings) => {
+      const updatedBookings = prevBookings.map((b) => {
+        const isTarget = b.serviceId === serviceId || b.serviceName === targetServiceName;
+        if (!isTarget) return b;
+
+        // Match the relevant package or fallback to base price
+        const matchedPkg = packages?.find(p => p.id === b.packageId || p.name === b.packageName);
+        const pkgBaseRate = matchedPkg ? matchedPkg.pricePerHour : basePrice;
+        const effectiveRate = discountPercent > 0
+          ? Math.round(pkgBaseRate * (1 - discountPercent / 100))
+          : pkgBaseRate;
+
+        const hours = b.hours || 3;
+        const newSubtotal = effectiveRate * hours;
+        const serviceFee = b.serviceFee || 450;
+        const newTotalAmount = newSubtotal + serviceFee;
+        const rawOriginalSubtotal = pkgBaseRate * hours;
+        const newDiscount = discountPercent > 0 ? (rawOriginalSubtotal - newSubtotal) : (b.discount || 0);
+
+        return {
+          ...b,
+          pricePerHour: effectiveRate,
+          subtotal: newSubtotal,
+          discount: newDiscount,
+          totalAmount: newTotalAmount
+        };
+      });
+
+      try {
+        localStorage.setItem('cleannest_local_bookings', JSON.stringify(updatedBookings));
+      } catch {}
+
+      // Update cleaner earnings dynamically based on the updated booking revenue
+      setCleaners((prevCleaners) =>
+        prevCleaners.map((c) => {
+          const completedForCleaner = updatedBookings.filter(
+            (b) =>
+              b.status === 'completed' &&
+              (b.cleanerId === c.id || b.cleanerName === c.name || (c.specialties && c.specialties.includes(b.serviceName)))
+          );
+          const computedTotalPayout = completedForCleaner.reduce(
+            (sum, b) => sum + (b.totalAmount * 0.85),
+            0
+          );
+          return {
+            ...c,
+            earnings: {
+              today: (c.earnings?.today ? Math.max(c.earnings.today, computedTotalPayout) : computedTotalPayout),
+              thisWeek: (c.earnings?.thisWeek ? Math.max(c.earnings.thisWeek, computedTotalPayout) : computedTotalPayout),
+              total: (c.earnings?.total ? Math.max(c.earnings.total, computedTotalPayout) : computedTotalPayout)
+            }
+          };
+        })
+      );
+
+      return updatedBookings;
+    });
   };
 
   const addNewService = (service: ServiceItem) => {
-    setServices((prev) => [service, ...prev]);
+    setServices((prev) => {
+      const updated = [service, ...prev];
+      try {
+        localStorage.setItem('cleannest_services', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
   };
 
   const markNotificationAsRead = (id: string) => {
@@ -774,6 +907,7 @@ export const CleanNestProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         updateCleanerProfile,
         updateCleanerStatus,
         updateServicePackagePrice,
+        updateServicePriceAndDiscount,
         addNewService,
         draftBooking,
         setDraftBooking,

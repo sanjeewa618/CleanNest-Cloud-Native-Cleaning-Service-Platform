@@ -54,7 +54,7 @@ function BookingForm() {
       d.setDate(now.getDate() + i);
       const dayLabel = i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : dayNames[d.getDay()];
       const dateStr = `${monthNames[d.getMonth()]} ${d.getDate()}${getSuffix(d.getDate())}`;
-      const label = i === 0 ? 'Express ($10)' : i === 1 ? 'Recommended' : d.getDay() === 0 || d.getDay() === 6 ? 'Weekend' : 'Standard';
+      const label = i === 0 ? 'Express (Rs. 500)' : i === 1 ? 'Recommended' : d.getDay() === 0 || d.getDay() === 6 ? 'Weekend' : 'Standard';
       options.push({ day: dayLabel, date: dateStr, label, dateObj: d });
     }
     return options;
@@ -83,10 +83,10 @@ function BookingForm() {
   };
 
   const [cleanerChoice, setCleanerChoice] = useState<string>(preselectedCleaner || 'auto'); // 'auto' or cleaner ID
-  const [streetAddress, setStreetAddress] = useState('742 Evergreen Terrace');
+  const [streetAddress, setStreetAddress] = useState('742 Galle Road, Bambalapitiya');
   const [apt, setApt] = useState('Apt 4B');
-  const [city, setCity] = useState('New York, NY');
-  const [zip, setZip] = useState('10001');
+  const [city, setCity] = useState('Colombo');
+  const [zip, setZip] = useState('00400');
   const [entryNotes, setEntryNotes] = useState('Buzzer #4B, please ring twice. Friendly golden retriever inside.');
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'apple_pay' | 'cash'>('card');
   const [promoCode, setPromoCode] = useState('CLEAN20');
@@ -102,12 +102,21 @@ function BookingForm() {
     : (cleaners.find(c => (c.status === 'ACTIVE' || c.status === 'active') && c.specialties?.includes(selectedService.name)) || cleaners[0]);
 
   const currentPkg = selectedService.packages.find((p) => p.id === packageId) || selectedService.packages[0];
+  const serviceDiscountPercent = selectedService.discountPercent || 0;
+  const effectiveHourlyRate = serviceDiscountPercent > 0
+    ? Math.round(currentPkg.pricePerHour * (1 - serviceDiscountPercent / 100))
+    : currentPkg.pricePerHour;
+
+  const rawServiceSubtotal = currentPkg.pricePerHour * hours;
+  const serviceDiscountSavings = serviceDiscountPercent > 0
+    ? rawServiceSubtotal - (effectiveHourlyRate * hours)
+    : 0;
 
   const addonsList = [
-    { id: 'addon-oven', name: 'Interior Oven Degrease', price: 30 },
-    { id: 'addon-fridge', name: 'Interior Refrigerator Sanitizing', price: 25 },
-    { id: 'addon-laundry', name: '1 Load Laundry & Folding', price: 20 },
-    { id: 'addon-eco', name: '100% Organic Plant-Based Supplies', price: 10 }
+    { id: 'addon-oven', name: 'Interior Oven Degrease', price: 1500 },
+    { id: 'addon-fridge', name: 'Interior Refrigerator Sanitizing', price: 1200 },
+    { id: 'addon-laundry', name: '1 Load Laundry & Folding', price: 1000 },
+    { id: 'addon-eco', name: '100% Organic Plant-Based Supplies', price: 500 }
   ];
 
   const toggleAddon = (id: string) => {
@@ -121,10 +130,11 @@ function BookingForm() {
     return acc + (item ? item.price : 0);
   }, 0);
 
-  const baseSubtotal = currentPkg.pricePerHour * hours + addonsTotal;
-  const discountAmount = promoApplied ? baseSubtotal * 0.2 : 0;
-  const serviceFee = 15;
-  const grandTotal = Math.max(0, baseSubtotal - discountAmount + serviceFee);
+  const baseSubtotal = (effectiveHourlyRate * hours) + addonsTotal;
+  const promoDiscountAmount = promoApplied ? baseSubtotal * 0.2 : 0;
+  const totalDiscount = serviceDiscountSavings + promoDiscountAmount;
+  const serviceFee = 450;
+  const grandTotal = Math.max(0, baseSubtotal - promoDiscountAmount + serviceFee);
 
   const timeSlots = [
     '08:00 AM - 11:00 AM',
@@ -166,7 +176,7 @@ function BookingForm() {
         serviceName: selectedService.name,
         packageId: currentPkg.id,
         packageName: currentPkg.name,
-        pricePerHour: currentPkg.pricePerHour,
+        pricePerHour: effectiveHourlyRate,
         hours: hours,
         selectedDate: selectedDate,
         selectedTimeSlot: selectedTimeSlot,
@@ -175,8 +185,8 @@ function BookingForm() {
         cleanerAvatar: chosenCleaner?.avatar,
         cleanerPhone: chosenCleaner?.phone,
         status: 'pending',
-        subtotal: baseSubtotal,
-        discount: discountAmount,
+        subtotal: rawServiceSubtotal + addonsTotal,
+        discount: totalDiscount,
         serviceFee: serviceFee,
         totalAmount: grandTotal,
         paymentMethod: paymentMethod,
@@ -259,7 +269,7 @@ function BookingForm() {
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
               <span style={{ color: '#64748b' }}>Total Paid:</span>
-              <strong style={{ color: '#15803d', fontSize: '1.1rem' }}>${grandTotal.toFixed(2)}</strong>
+              <strong style={{ color: '#15803d', fontSize: '1.1rem' }}>Rs. {grandTotal.toLocaleString()}</strong>
             </div>
           </div>
 
@@ -375,7 +385,7 @@ function BookingForm() {
                         {pkg.name}
                       </div>
                       <div style={{ fontWeight: 800, fontSize: '1.15rem', color: '#0f172a', margin: '4px 0' }}>
-                        ${pkg.pricePerHour}<span style={{ fontSize: '0.75rem', color: '#64748b' }}>/hr</span>
+                        Rs. {pkg.pricePerHour.toLocaleString()}<span style={{ fontSize: '0.75rem', color: '#64748b' }}>/hr</span>
                       </div>
                     </div>
                   );
@@ -742,7 +752,7 @@ function BookingForm() {
                     >
                       <div>
                         <div style={{ fontWeight: 600, fontSize: '0.85rem', color: '#0f172a' }}>{addon.name}</div>
-                        <div style={{ fontSize: '0.75rem', color: '#15803d', fontWeight: 700 }}>+${addon.price}</div>
+                        <div style={{ fontSize: '0.75rem', color: '#15803d', fontWeight: 700 }}>+Rs. {addon.price.toLocaleString()}</div>
                       </div>
                       <div style={{
                         width: '20px',
@@ -902,26 +912,33 @@ function BookingForm() {
               {/* Price Breakdown */}
               <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '16px', marginBottom: '20px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: '#64748b', marginBottom: '8px' }}>
-                  <span>Service ({currentPkg.pricePerHour} × {hours} hrs)</span>
-                  <span>${currentPkg.pricePerHour * hours}</span>
+                  <span>Service ({currentPkg.name} Tier × {hours} hrs)</span>
+                  <span>Rs. {(currentPkg.pricePerHour * hours).toLocaleString()}</span>
                 </div>
+
+                {serviceDiscountPercent > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: '#15803d', fontWeight: 600, marginBottom: '8px' }}>
+                    <span>Cleaner Promo Discount ({serviceDiscountPercent}% OFF)</span>
+                    <span>-Rs. {serviceDiscountSavings.toLocaleString()}</span>
+                  </div>
+                )}
 
                 {addonsTotal > 0 && (
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: '#64748b', marginBottom: '8px' }}>
                     <span>Selected Add-ons</span>
-                    <span>+${addonsTotal}</span>
+                    <span>+Rs. {addonsTotal.toLocaleString()}</span>
                   </div>
                 )}
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: '#64748b', marginBottom: '8px' }}>
                   <span>Trust, Insurance & Safety</span>
-                  <span>${serviceFee}</span>
+                  <span>Rs. {serviceFee.toLocaleString()}</span>
                 </div>
 
-                {discountAmount > 0 && (
+                {promoDiscountAmount > 0 && (
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: '#15803d', fontWeight: 600, marginBottom: '8px' }}>
-                    <span>20% Welcome Promo</span>
-                    <span>-${discountAmount.toFixed(2)}</span>
+                    <span>20% Welcome Promo (CLEAN20)</span>
+                    <span>-Rs. {promoDiscountAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
                 )}
 
@@ -935,7 +952,7 @@ function BookingForm() {
                 }}>
                   <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0f172a' }}>Total Amount</span>
                   <span style={{ fontSize: '1.75rem', fontWeight: 800, color: '#15803d' }}>
-                    ${grandTotal.toFixed(2)}
+                    Rs. {grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
               </div>
@@ -1047,7 +1064,7 @@ function BookingForm() {
               alignItems: 'center', marginBottom: '24px'
             }}>
               <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#15803d' }}>📅 {selectedDate} · {selectedTimeSlot}</span>
-              <span style={{ fontSize: '1.3rem', fontWeight: 800, color: '#15803d' }}>${grandTotal.toFixed(2)}</span>
+              <span style={{ fontSize: '1.3rem', fontWeight: 800, color: '#15803d' }}>Rs. {grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </div>
 
             {paymentMethod === 'card' && (
@@ -1153,7 +1170,7 @@ function BookingForm() {
             {paymentMethod === 'cash' && (
               <div style={{ padding: '24px', textAlign: 'center', backgroundColor: '#f0fdf4', borderRadius: '16px', marginBottom: '24px', border: '1px solid #dcfce7' }}>
                 <div style={{ fontSize: '2rem', marginBottom: '10px' }}>💵</div>
-                <div style={{ fontWeight: 600, color: '#15803d' }}>Pay ${grandTotal.toFixed(2)} in cash to your cleaner after the service is complete.</div>
+                <div style={{ fontWeight: 600, color: '#15803d' }}>Pay Rs. {grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} in cash to your cleaner after the service is complete.</div>
               </div>
             )}
 
@@ -1177,7 +1194,7 @@ function BookingForm() {
                 <span>⏳ Processing Payment...</span>
               ) : (
                 <>
-                  <span>Confirm & Pay ${grandTotal.toFixed(2)}</span>
+                  <span>Confirm & Pay Rs. {grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   <CheckCircle2 size={20} />
                 </>
               )}

@@ -5,6 +5,7 @@ export interface ServicePackage {
   description: string;
   recommended?: boolean;
   features: string[];
+  discountPercent?: number;
 }
 
 export interface ServiceItem {
@@ -27,6 +28,7 @@ export interface ServiceItem {
   }[];
   packages: ServicePackage[];
   basePrice: number;
+  discountPercent?: number;
 }
 
 export interface Cleaner {
@@ -123,14 +125,14 @@ export const INITIAL_SERVICES: ServiceItem[] = [
       {
         id: 'pkg-std',
         name: 'Standard',
-        pricePerHour: 65,
+        pricePerHour: 1500,
         description: 'Ideal for routine maintenance and regular touch-ups.',
         features: ['Surface Dusting', 'Vacuuming & Mopping', 'Kitchen & Bath Refresh', 'Trash Emptying']
       },
       {
         id: 'pkg-deep',
         name: 'Deep Clean',
-        pricePerHour: 96,
+        pricePerHour: 2200,
         recommended: true,
         description: 'Thorough disinfection of grout, baseboards, and hard-to-reach areas.',
         features: ['All Standard items', 'Inside microwave & oven exterior', 'Detailed baseboards & doors', 'Bathroom lime/mold treatment']
@@ -138,12 +140,12 @@ export const INITIAL_SERVICES: ServiceItem[] = [
       {
         id: 'pkg-move',
         name: 'Move In/Out',
-        pricePerHour: 120,
+        pricePerHour: 2800,
         description: 'Comprehensive cleaning designed for lease handovers and new homes.',
         features: ['Full deep clean', 'Inside empty cabinets & drawers', 'Inside fridge & oven interior', 'Spot wall cleaning & windows']
       }
     ],
-    basePrice: 65
+    basePrice: 1500
   },
   {
     id: 'srv-2',
@@ -168,14 +170,14 @@ export const INITIAL_SERVICES: ServiceItem[] = [
       {
         id: 'pkg-sofa-std',
         name: '2-3 Seater Sofa',
-        pricePerHour: 55,
+        pricePerHour: 1800,
         description: 'Standard 2 or 3 seater fabric or leather sofa.',
         features: ['Deep Steam Extraction', 'Stain Pre-treatment', 'Eco Sanitizer Spray']
       },
       {
         id: 'pkg-sofa-lshape',
         name: 'L-Shape Sectional',
-        pricePerHour: 85,
+        pricePerHour: 2400,
         recommended: true,
         description: 'Large corner sectional sofa with chaise lounge.',
         features: ['Sectional extraction', 'Cushion deep sanitizing', 'Odor neutralizer treatment']
@@ -183,12 +185,12 @@ export const INITIAL_SERVICES: ServiceItem[] = [
       {
         id: 'pkg-sofa-deluxe',
         name: 'Full Living Set',
-        pricePerHour: 130,
+        pricePerHour: 3200,
         description: 'Sofa + 2 accent armchairs + ottomans.',
         features: ['Complete furniture suite', 'Leather conditioning or fabric protector', 'Express drying technology']
       }
     ],
-    basePrice: 55
+    basePrice: 1800
   },
   {
     id: 'srv-3',
@@ -212,20 +214,20 @@ export const INITIAL_SERVICES: ServiceItem[] = [
       {
         id: 'pkg-carpet-1room',
         name: '1-2 Rooms',
-        pricePerHour: 60,
+        pricePerHour: 1600,
         description: 'Living area or 2 bedrooms.',
         features: ['Steam Extraction', 'Spot stain treatment', 'Fast drying airflow']
       },
       {
         id: 'pkg-carpet-whole',
         name: 'Whole Apartment',
-        pricePerHour: 110,
+        pricePerHour: 2600,
         recommended: true,
         description: 'Up to 3-4 rooms and hallway runner.',
         features: ['All rooms & hallway', 'High-traffic lane booster', 'Anti-static conditioning']
       }
     ],
-    basePrice: 60
+    basePrice: 1600
   },
   {
     id: 'srv-4',
@@ -249,20 +251,20 @@ export const INITIAL_SERVICES: ServiceItem[] = [
       {
         id: 'pkg-win-std',
         name: 'Standard (Up to 10 Panes)',
-        pricePerHour: 50,
+        pricePerHour: 1200,
         description: 'Standard apartment or small townhouse.',
         features: ['Interior & exterior panes', 'Sill wipedown']
       },
       {
         id: 'pkg-win-large',
         name: 'Full Home (Up to 20 Panes)',
-        pricePerHour: 90,
+        pricePerHour: 2000,
         recommended: true,
         description: 'Medium to large single-family home.',
         features: ['Full window suite', 'Tracks & screens included', 'Hydrophobic rain repellent']
       }
     ],
-    basePrice: 50
+    basePrice: 1200
   },
   {
     id: 'srv-5',
@@ -287,20 +289,20 @@ export const INITIAL_SERVICES: ServiceItem[] = [
       {
         id: 'pkg-deep-condo',
         name: '1-2 Bedroom Deep',
-        pricePerHour: 95,
+        pricePerHour: 2200,
         description: 'Ideal for condos and apartments.',
         features: ['Full intensive protocol', 'Eco sanitizers', '2 cleaners assigned']
       },
       {
         id: 'pkg-deep-house',
         name: '3+ Bedroom House',
-        pricePerHour: 145,
+        pricePerHour: 3500,
         recommended: true,
         description: 'Large family homes needing restorative cleaning.',
         features: ['Dedicated team of 3', 'Appliance interior included', 'Air filter refresh']
       }
     ],
-    basePrice: 95
+    basePrice: 2200
   },
   {
     id: 'srv-6',
@@ -324,20 +326,20 @@ export const INITIAL_SERVICES: ServiceItem[] = [
       {
         id: 'pkg-kitch-std',
         name: 'Kitchen Standard',
-        pricePerHour: 58,
+        pricePerHour: 1800,
         description: 'Exterior appliances, counters, sink and backsplash.',
         features: ['Degrease stovetop', 'Sanitize counters', 'Polish sink & faucet']
       },
       {
         id: 'pkg-kitch-deep',
         name: 'Kitchen Intensive',
-        pricePerHour: 88,
+        pricePerHour: 2500,
         recommended: true,
         description: 'Includes inside oven and inside refrigerator.',
         features: ['Inside oven soak', 'Inside fridge sanitized', 'Pantry wipe-down']
       }
     ],
-    basePrice: 58
+    basePrice: 1800
   },
   {
     id: 'srv-7',
@@ -361,20 +363,20 @@ export const INITIAL_SERVICES: ServiceItem[] = [
       {
         id: 'pkg-garden-std',
         name: 'Standard Sweep',
-        pricePerHour: 45,
+        pricePerHour: 1200,
         description: 'Basic sweep and debris bagging for small yards.',
         features: ['Sweeping', 'Leaf Bagging']
       },
       {
         id: 'pkg-garden-deep',
         name: 'Full Outdoor Revival',
-        pricePerHour: 80,
+        pricePerHour: 2000,
         recommended: true,
         description: 'Includes pressure washing and weed treatment.',
         features: ['Pressure Washing', 'Weed Treatment', 'Full Sweeping']
       }
     ],
-    basePrice: 45
+    basePrice: 1200
   }
 ];
 
@@ -393,9 +395,9 @@ export const INITIAL_CLEANERS: Cleaner[] = [
     status: 'active',
     specialties: ['Deep Cleaning', 'Sofa Cleaning', 'Move In/Out'],
     earnings: {
-      today: 185,
-      thisWeek: 940,
-      total: 18450
+      today: 8500,
+      thisWeek: 42500,
+      total: 680000
     },
     availability: ['09:00 AM - 12:00 PM', '01:00 PM - 04:00 PM', '05:00 PM - 08:00 PM']
   },
@@ -413,9 +415,9 @@ export const INITIAL_CLEANERS: Cleaner[] = [
     status: 'active',
     specialties: ['Home Cleaning', 'Kitchen Cleaning', 'Organic Products'],
     earnings: {
-      today: 210,
-      thisWeek: 1120,
-      total: 21300
+      today: 12000,
+      thisWeek: 56000,
+      total: 820000
     },
     availability: ['08:00 AM - 11:00 AM', '12:00 PM - 03:00 PM', '03:30 PM - 06:30 PM']
   },
@@ -434,8 +436,8 @@ export const INITIAL_CLEANERS: Cleaner[] = [
     specialties: ['Carpet Cleaning', 'Window Cleaning', 'Stain Removal'],
     earnings: {
       today: 0,
-      thisWeek: 640,
-      total: 14200
+      thisWeek: 28000,
+      total: 540000
     },
     availability: ['10:00 AM - 01:00 PM', '02:00 PM - 05:00 PM']
   }

@@ -184,7 +184,7 @@ export default function CleanerOverviewPage() {
                       </div>
                       <div>
                         <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600 }}>TOTAL PAID</div>
-                        <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#15803d' }}>${alert.totalAmount.toFixed(2)}</div>
+                        <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#15803d' }}>Rs. {alert.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                       </div>
                     </div>
                   </div>
@@ -381,7 +381,7 @@ export default function CleanerOverviewPage() {
             <DollarSign size={18} color="#15803d" />
           </div>
           <div style={{ fontSize: '1.85rem', fontWeight: 800, color: '#15803d' }}>
-            ${todayEarnings.toFixed(2)}
+            Rs. {todayEarnings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <div style={{ fontSize: '0.75rem', color: '#16a34a', fontWeight: 600, marginTop: '4px' }}>
             +{completedJobs.length} completed jobs
@@ -400,7 +400,7 @@ export default function CleanerOverviewPage() {
             <TrendingUp size={18} color="#0284c7" />
           </div>
           <div style={{ fontSize: '1.85rem', fontWeight: 800, color: '#0f172a' }}>
-            ${thisWeekEarnings.toFixed(2)}
+            Rs. {thisWeekEarnings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
             Payout scheduled for Monday
@@ -419,7 +419,7 @@ export default function CleanerOverviewPage() {
             <DollarSign size={18} color="#f59e0b" />
           </div>
           <div style={{ fontSize: '1.85rem', fontWeight: 800, color: '#0f172a' }}>
-            ${totalLifetimeEarnings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            Rs. {totalLifetimeEarnings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
             Direct bank deposit verified

@@ -49,8 +49,13 @@ export default function ServiceDetailsPage() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [copiedShare, setCopiedShare] = useState(false);
 
+  const discountPercent = service.discountPercent || 0;
   const selectedPackage = service.packages.find((p) => p.id === selectedPackageId) || service.packages[0];
-  const totalPrice = (selectedPackage ? selectedPackage.pricePerHour : service.basePrice) * selectedHours;
+  const originalPackageRate = selectedPackage ? selectedPackage.pricePerHour : service.basePrice;
+  const effectivePackageRate = discountPercent > 0
+    ? Math.round(originalPackageRate * (1 - discountPercent / 100))
+    : originalPackageRate;
+  const totalPrice = effectivePackageRate * selectedHours;
 
   const handleShare = () => {
     if (typeof window !== 'undefined') {
@@ -66,7 +71,7 @@ export default function ServiceDetailsPage() {
       serviceName: service.name,
       packageId: selectedPackage.id,
       packageName: selectedPackage.name,
-      pricePerHour: selectedPackage.pricePerHour,
+      pricePerHour: effectivePackageRate,
       hours: selectedHours,
       subtotal: totalPrice
     });
@@ -383,16 +388,33 @@ export default function ServiceDetailsPage() {
                 </div>
               </div>
 
-              {/* "Select Your Package" - matches Screen 3: Standard ($65/hr), Deep Clean ($96/hr), Move In/Out ($120/hr) */}
+              {/* "Select Your Package" - Standard, Deep Clean, Move In/Out */}
               <div>
-                <h3 style={{
-                  fontSize: '1.25rem',
-                  fontWeight: 800,
-                  color: '#0f172a',
-                  marginBottom: '16px'
-                }}>
-                  Select Your Package
-                </h3>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
+                  <h3 style={{
+                    fontSize: '1.25rem',
+                    fontWeight: 800,
+                    color: '#0f172a',
+                    margin: 0
+                  }}>
+                    Select Your Package
+                  </h3>
+                  {discountPercent > 0 && (
+                    <span style={{
+                      backgroundColor: '#fef08a',
+                      color: '#854d0e',
+                      padding: '4px 12px',
+                      borderRadius: '9999px',
+                      fontSize: '0.8rem',
+                      fontWeight: 800,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}>
+                      ⚡ {discountPercent}% Special Discount Applied
+                    </span>
+                  )}
+                </div>
 
                 <div style={{
                   display: 'grid',
@@ -401,6 +423,10 @@ export default function ServiceDetailsPage() {
                 }}>
                   {service.packages.map((pkg) => {
                     const isSelected = selectedPackageId === pkg.id;
+                    const pkgDiscountRate = discountPercent > 0
+                      ? Math.round(pkg.pricePerHour * (1 - discountPercent / 100))
+                      : pkg.pricePerHour;
+
                     return (
                       <div
                         key={pkg.id}
@@ -436,10 +462,15 @@ export default function ServiceDetailsPage() {
                           {pkg.name}
                         </div>
 
-                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', marginBottom: '12px' }}>
-                          <span style={{ fontSize: '1.65rem', fontWeight: 800, color: '#0f172a' }}>
-                            ${pkg.pricePerHour}
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginBottom: '12px', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '1.45rem', fontWeight: 800, color: '#0f172a' }}>
+                            Rs. {pkgDiscountRate.toLocaleString()}
                           </span>
+                          {discountPercent > 0 && (
+                            <span style={{ fontSize: '0.85rem', color: '#94a3b8', textDecoration: 'line-through' }}>
+                              Rs. {pkg.pricePerHour.toLocaleString()}
+                            </span>
+                          )}
                           <span style={{ fontSize: '0.85rem', color: '#64748b' }}>/hr</span>
                         </div>
 
@@ -484,12 +515,20 @@ export default function ServiceDetailsPage() {
                 marginBottom: '20px',
                 border: '1px solid #f1f5f9'
               }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', alignItems: 'baseline' }}>
                   <span style={{ fontWeight: 600, color: '#0f172a' }}>{service.name}</span>
-                  <span style={{ color: '#15803d', fontWeight: 700 }}>${selectedPackage?.pricePerHour}/hr</span>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                    <span style={{ color: '#15803d', fontWeight: 700 }}>Rs. {effectivePackageRate.toLocaleString()}/hr</span>
+                    {discountPercent > 0 && (
+                      <span style={{ color: '#94a3b8', fontSize: '0.75rem', textDecoration: 'line-through' }}>
+                        Rs. {originalPackageRate.toLocaleString()}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div style={{ fontSize: '0.8125rem', color: '#64748b' }}>
                   Selected Tier: <strong>{selectedPackage?.name}</strong>
+                  {discountPercent > 0 && <span style={{ color: '#15803d', fontWeight: 700, marginLeft: '6px' }}>({discountPercent}% OFF)</span>}
                 </div>
               </div>
 
@@ -527,16 +566,16 @@ export default function ServiceDetailsPage() {
               {/* Price Calculation breakdown */}
               <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '16px', marginBottom: '20px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: '#64748b', marginBottom: '8px' }}>
-                  <span>Rate (${selectedPackage?.pricePerHour} × {selectedHours} hrs)</span>
-                  <span>${(selectedPackage?.pricePerHour || 65) * selectedHours}</span>
+                  <span>Rate (Rs. {effectivePackageRate.toLocaleString()} × {selectedHours} hrs)</span>
+                  <span>Rs. {(effectivePackageRate * selectedHours).toLocaleString()}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: '#64748b', marginBottom: '8px' }}>
                   <span>Trust & Safety Fee</span>
-                  <span>$12</span>
+                  <span>Rs. 450</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: '#15803d', marginBottom: '12px', fontWeight: 600 }}>
                   <span>First Booking Discount (CLEAN20)</span>
-                  <span>-$20.00</span>
+                  <span>-Rs. 500.00</span>
                 </div>
 
                 <div style={{
@@ -547,8 +586,8 @@ export default function ServiceDetailsPage() {
                   paddingTop: '12px'
                 }}>
                   <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0f172a' }}>Total Estimated:</span>
-                  <span style={{ fontSize: '1.65rem', fontWeight: 800, color: '#15803d' }}>
-                    ${Math.max(0, (selectedPackage?.pricePerHour || 65) * selectedHours + 12 - 20).toFixed(2)}
+                  <span style={{ fontSize: '1.5rem', fontWeight: 800, color: '#15803d' }}>
+                    Rs. {Math.max(0, effectivePackageRate * selectedHours + 450 - 500).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
               </div>

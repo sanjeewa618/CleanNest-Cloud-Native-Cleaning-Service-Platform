@@ -2,40 +2,36 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ArrowRight, Sparkles, Star } from 'lucide-react';
+import { ArrowRight, Sparkles, Star, Tag } from 'lucide-react';
+import { useCleanNest } from '@/context/CleanNestContext';
 
 export const FeaturedOffers: React.FC = () => {
+  const { services } = useCleanNest();
+
+  const getFeaturedItem = (slug: string, defaultTitle: string, subtitle: string, defaultImg: string, defaultBadge: string) => {
+    const srv = services.find(s => s.slug === slug);
+    const basePrice = srv ? srv.basePrice : 2000;
+    const discount = srv?.discountPercent || 0;
+    const discountedPrice = discount > 0 ? Math.round(basePrice * (1 - discount / 100)) : basePrice;
+
+    return {
+      id: slug,
+      title: srv?.name || defaultTitle,
+      subtitle,
+      image: srv?.image || defaultImg,
+      slug,
+      rawPrice: basePrice,
+      discountedPrice,
+      discount,
+      rating: srv?.rating || 4.9,
+      badge: discount > 0 ? `${discount}% OFF Promo` : defaultBadge
+    };
+  };
+
   const featured = [
-    {
-      id: 'deep-clean',
-      title: 'Deep Cleaning',
-      subtitle: 'For a healthier home',
-      image: '/images/female_cleaner_hero.jpg',
-      slug: 'deep-cleaning',
-      price: '$95/hr',
-      rating: 5.0,
-      badge: 'Most Popular'
-    },
-    {
-      id: 'kitchen-clean',
-      title: 'Kitchen Cleaning',
-      subtitle: 'Sparkling results',
-      image: '/images/kitchen_cleaning.jpg',
-      slug: 'kitchen-cleaning',
-      price: '$58/hr',
-      rating: 4.9,
-      badge: 'Best Value'
-    },
-    {
-      id: 'sofa-clean',
-      title: 'Sofa & Couch Care',
-      subtitle: 'Stain & odor removal',
-      image: '/images/hero_cleaner.jpg',
-      slug: 'sofa-cleaning',
-      price: '$55/hr',
-      rating: 4.8,
-      badge: 'Pet Friendly'
-    }
+    getFeaturedItem('deep-cleaning', 'Deep Cleaning', 'For a healthier home', '/images/female_cleaner_hero.jpg', 'Most Popular'),
+    getFeaturedItem('kitchen-cleaning', 'Kitchen Cleaning', 'Sparkling results', '/images/kitchen_cleaning.jpg', 'Best Value'),
+    getFeaturedItem('sofa-cleaning', 'Sofa & Couch Care', 'Stain & odor removal', '/images/hero_cleaner.jpg', 'Pet Friendly')
   ];
 
   return (
@@ -161,9 +157,15 @@ export const FeaturedOffers: React.FC = () => {
                 <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', marginBottom: '4px' }}>
                   {item.title}
                 </h3>
-                <p style={{ fontSize: '0.875rem', color: '#64748b' }}>
-                  {item.subtitle} • <span style={{ fontWeight: 700, color: '#15803d' }}>{item.price}</span>
-                </p>
+                <div style={{ fontSize: '0.875rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                  <span>{item.subtitle} •</span>
+                  <span style={{ fontWeight: 800, color: '#15803d' }}>Rs. {item.discountedPrice.toLocaleString()}/hr</span>
+                  {item.discount > 0 && (
+                    <span style={{ textDecoration: 'line-through', color: '#94a3b8', fontSize: '0.78rem' }}>
+                      Rs. {item.rawPrice.toLocaleString()}
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* Round Arrow Button - exactly like Screen 2 */}

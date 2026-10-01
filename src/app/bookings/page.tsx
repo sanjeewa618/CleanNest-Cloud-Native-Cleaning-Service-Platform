@@ -426,7 +426,7 @@ export default function CustomerBookingsPage() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '4px' }}>
                       <span style={{ fontSize: '0.85rem', color: '#64748b' }}>Total Paid:</span>
                       <strong style={{ fontSize: '1.25rem', color: '#15803d' }}>
-                        ${(b.totalAmount ?? (b as any).price ?? 0).toFixed(2)}
+                        Rs. {(b.totalAmount ?? (b as any).price ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </strong>
                       <span style={{ fontSize: '0.75rem', backgroundColor: '#dcfce7', color: '#14532d', padding: '2px 8px', borderRadius: '6px', fontWeight: 700 }}>
                         {(b.paymentStatus ?? 'paid').toUpperCase()}

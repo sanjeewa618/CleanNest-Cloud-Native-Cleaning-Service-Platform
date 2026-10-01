@@ -137,7 +137,7 @@ export default function CleanerBookingsPage() {
                 <div>
                   <div style={{ color: '#64748b', fontSize: '0.75rem' }}>Payout for Job:</div>
                   <div style={{ fontWeight: 800, color: '#15803d', fontSize: '1.15rem' }}>
-                    ${(b.totalAmount * 0.85).toFixed(2)}
+                    Rs. {(b.totalAmount * 0.85).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </div>
                 </div>
               </div>

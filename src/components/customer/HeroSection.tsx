@@ -138,12 +138,15 @@ export const HeroSection: React.FC = () => {
               A cleaner home, a healthier you. Book trusted, vetted, and background-checked cleaning professionals in minutes.
             </p>
 
-            {/* Instant Booking Quick-Card */}
+            {/* Instant Booking Quick-Card (Transparent Glassmorphism Design) */}
             <div className="scroll-animate fade-up delay-300" style={{
-              backgroundColor: '#ffffff',
+              backgroundColor: 'rgba(255, 255, 255, 0.45)',
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
               borderRadius: '24px',
               padding: '24px',
-              boxShadow: '0 20px 40px -10px rgba(21, 128, 61, 0.12), 0 0 0 1px #e2e8f0',
+              border: '1.5px solid rgba(255, 255, 255, 0.75)',
+              boxShadow: '0 20px 40px -10px rgba(21, 128, 61, 0.08), 0 8px 24px rgba(0, 0, 0, 0.03)',
               marginBottom: '28px'
             }}>
               <form onSubmit={handleStartBooking} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -164,8 +167,10 @@ export const HeroSection: React.FC = () => {
                         width: '100%',
                         padding: '12px 14px',
                         borderRadius: '12px',
-                        border: '1px solid #cbd5e1',
-                        backgroundColor: '#f8fafc',
+                        border: '1px solid rgba(203, 213, 225, 0.65)',
+                        backgroundColor: 'rgba(255, 255, 255, 0.65)',
+                        backdropFilter: 'blur(8px)',
+                        WebkitBackdropFilter: 'blur(8px)',
                         fontSize: '0.9375rem',
                         fontWeight: 600,
                         color: '#0f172a'
@@ -173,7 +178,7 @@ export const HeroSection: React.FC = () => {
                     >
                       {services.map((s) => (
                         <option key={s.id} value={s.slug}>
-                          {s.name} (from ${s.basePrice}/hr)
+                          {s.name} (from Rs. {s.basePrice.toLocaleString()}/hr)
                         </option>
                       ))}
                     </select>
@@ -187,9 +192,11 @@ export const HeroSection: React.FC = () => {
                     <div style={{
                       display: 'flex',
                       alignItems: 'center',
-                      backgroundColor: '#f8fafc',
+                      backgroundColor: 'rgba(255, 255, 255, 0.65)',
+                      backdropFilter: 'blur(8px)',
+                      WebkitBackdropFilter: 'blur(8px)',
                       borderRadius: '12px',
-                      border: '1px solid #cbd5e1',
+                      border: '1px solid rgba(203, 213, 225, 0.65)',
                       padding: '0 12px'
                     }}>
                       <MapPin size={18} color="#15803d" />

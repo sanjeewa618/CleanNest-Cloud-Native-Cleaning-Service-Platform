@@ -61,6 +61,7 @@ export default function AdminSettingsPage() {
               <div>
                 <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 700, color: '#334155', marginBottom: '8px' }}>Currency</label>
                 <select style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid #cbd5e1', outline: 'none', fontSize: '1rem', color: '#0f172a', backgroundColor: '#fff' }}>
+                  <option>LKR (Rs.)</option>
                   <option>USD ($)</option>
                   <option>EUR (€)</option>
                   <option>GBP (£)</option>
