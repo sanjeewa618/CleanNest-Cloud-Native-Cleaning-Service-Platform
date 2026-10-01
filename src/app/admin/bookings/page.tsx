@@ -73,7 +73,7 @@ export default function AdminBookingsPage() {
                     <div style={{ fontWeight: 600, color: '#0f172a', marginBottom: '4px' }}>{booking.serviceName}</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.75rem', color: '#64748b' }}>
                       <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Clock size={12} /> {booking.selectedDate} {booking.selectedTimeSlot}</span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><MapPin size={12} /> {booking.address.substring(0, 20)}...</span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><MapPin size={12} /> {booking.customerAddress?.street?.substring(0, 20)}...</span>
                     </div>
                   </td>
                   <td style={{ padding: '16px 24px' }}>

@@ -33,18 +33,25 @@ export const HeroSection: React.FC = () => {
       overflow: 'hidden',
       backgroundColor: '#ecfdf5'
     }}>
-      {/* Background Image on the right half */}
+      {/* Background Image on the right half - mirrored so cleaner faces inward */}
       <div style={{
         position: 'absolute',
         top: 0,
         right: 0,
         width: '55%',
         height: '100%',
-        backgroundImage: 'url("/images/hero_cleaners_group.jpg")',
-        backgroundSize: 'cover',
-        backgroundPosition: 'right center',
-        zIndex: 0
-      }} />
+        zIndex: 0,
+        overflow: 'hidden'
+      }}>
+        <div style={{
+          width: '100%',
+          height: '100%',
+          backgroundImage: 'url("/images/cleannest_hero_new.jpg")',
+          backgroundSize: 'cover',
+          backgroundPosition: 'left center',
+          transform: 'scaleX(-1)'
+        }} />
+      </div>
 
       {/* Gradient Overlay (blending the solid left side into the image) */}
       <div style={{

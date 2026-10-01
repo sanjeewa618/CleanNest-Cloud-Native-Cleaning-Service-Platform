@@ -81,7 +81,7 @@ export default function AdminProvidersPage() {
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.875rem', color: '#475569' }}>
-                    <Briefcase size={16} color="#94a3b8" /> <strong>Category:</strong> {req.category || 'N/A'}
+                    <Briefcase size={16} color="#94a3b8" /> <strong>Category:</strong> {req.role || 'N/A'}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.875rem', color: '#475569' }}>
                     <Mail size={16} color="#94a3b8" /> <strong>Email:</strong> {req.email || 'N/A'}
@@ -158,7 +158,7 @@ export default function AdminProvidersPage() {
                   </td>
                   <td style={{ padding: '16px 24px' }}>
                     <div style={{ fontSize: '0.875rem', color: '#0f172a', fontWeight: 600 }}>
-                      {provider.category || (provider.specialties && provider.specialties.length > 0 ? provider.specialties[0] : 'General')}
+                      {provider.role || (provider.specialties && provider.specialties.length > 0 ? provider.specialties[0] : 'General')}
                     </div>
                   </td>
                   <td style={{ padding: '16px 24px' }}>
@@ -166,7 +166,7 @@ export default function AdminProvidersPage() {
                       <Star size={16} color="#f59e0b" fill="#f59e0b" /> {provider.rating ? provider.rating.toFixed(1) : '5.0'}
                     </div>
                     <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                      {provider.completedJobs || 0} jobs
+                      {provider.jobsCompleted || 0} jobs
                     </div>
                   </td>
                   <td style={{ padding: '16px 24px' }}>

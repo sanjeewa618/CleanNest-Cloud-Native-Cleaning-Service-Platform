@@ -160,7 +160,7 @@ export default function AdminDashboardPage() {
                 <div key={b.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', border: '1px solid #f1f5f9', borderRadius: '12px', backgroundColor: '#f8fafc' }}>
                   <div>
                     <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.875rem' }}>{b.serviceName}</div>
-                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>{b.customerName} • {b.date}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>{b.customerName} • {b.selectedDate}</div>
                   </div>
                   <div style={{ 
                     padding: '4px 10px', 
@@ -191,7 +191,7 @@ export default function AdminDashboardPage() {
                     <img src={c.avatar} alt={c.name} style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} />
                     <div>
                       <div style={{ fontWeight: 700, color: '#d97706', fontSize: '0.875rem' }}>{c.name}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#b45309', marginTop: '2px' }}>{c.category || 'General'}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#b45309', marginTop: '2px' }}>{c.role || 'General'}</div>
                     </div>
                   </div>
                   <a href="/admin/providers" style={{ fontSize: '0.75rem', fontWeight: 700, color: '#d97706', textDecoration: 'none', backgroundColor: '#fef3c7', padding: '4px 10px', borderRadius: '12px' }}>
