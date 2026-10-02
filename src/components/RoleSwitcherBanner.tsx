@@ -63,9 +63,15 @@ export const RoleSwitcherBanner: React.FC = () => {
             }}></span>
             LIVE DEMO ACTORS
           </span>
-          <span style={{ color: '#94a3b8' }}>
-            Logged in as <strong style={{ color: '#f8fafc' }}>{currentUser.name}</strong> ({role.toUpperCase()})
-          </span>
+          {currentUser?.name ? (
+            <span style={{ color: '#94a3b8' }}>
+              Logged in as <strong style={{ color: '#f8fafc' }}>{currentUser.name}</strong> ({role.toUpperCase()})
+            </span>
+          ) : (
+            <span style={{ color: '#94a3b8' }}>
+              Welcome to CleanNest • <Link href="/login" style={{ color: '#4ade80', textDecoration: 'none', fontWeight: 600 }}>Sign In</Link>
+            </span>
+          )}
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#cbd5e1', fontSize: '0.85rem', fontWeight: 500 }}>

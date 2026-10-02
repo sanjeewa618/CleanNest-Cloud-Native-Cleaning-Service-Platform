@@ -40,10 +40,9 @@ export default function CustomerBookingsPage() {
   const userBookings = bookings.filter((b) => {
     if (!currentUser) return true;
     return (
-      b.customerId === currentUser.id ||
-      b.customerName === currentUser.name ||
-      !b.customerId ||
-      b.customerId === 'usr-cust'
+      (Boolean(b.customerId) && b.customerId === currentUser.id) ||
+      (Boolean(b.customerName) && Boolean(currentUser.name) && b.customerName === currentUser.name) ||
+      !b.customerId
     );
   });
 

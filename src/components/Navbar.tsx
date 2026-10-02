@@ -299,106 +299,70 @@ export const Navbar: React.FC = () => {
               )}
             </div>
 
-            {/* User Profile Avatar with dropdown (matches Screen 2 avatar) */}
-            <div style={{ position: 'relative' }}>
-              <button
-                onClick={() => setShowUserMenu(!showUserMenu)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '4px 8px 4px 4px',
-                  borderRadius: '9999px',
-                  backgroundColor: '#f8fafc',
-                  border: '1px solid #e2e8f0'
-                }}
-              >
-                <img
-                  src={currentUser.avatar}
-                  alt={currentUser.name}
+            {/* User Profile Avatar with dropdown or Sign In CTA */}
+            {currentUser?.name ? (
+              <div style={{ position: 'relative' }}>
+                <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
                   style={{
-                    width: '34px',
-                    height: '34px',
-                    borderRadius: '50%',
-                    objectFit: 'cover'
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '4px 8px 4px 4px',
+                    borderRadius: '9999px',
+                    backgroundColor: '#f8fafc',
+                    border: '1px solid #e2e8f0'
                   }}
-                />
-                <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#1e293b' }} className="user-name-text">
-                  {currentUser.name.split(' ')[0]}
-                </span>
-                <ChevronDown size={14} color="#64748b" />
-              </button>
+                >
+                  <img
+                    src={currentUser.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name || 'User')}&background=random`}
+                    alt={currentUser.name}
+                    style={{
+                      width: '34px',
+                      height: '34px',
+                      borderRadius: '50%',
+                      objectFit: 'cover'
+                    }}
+                  />
+                  <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#1e293b' }} className="user-name-text">
+                    {currentUser.name ? currentUser.name.split(' ')[0] : 'User'}
+                  </span>
+                  <ChevronDown size={14} color="#64748b" />
+                </button>
 
-              {showUserMenu && (
-                <div style={{
-                  position: 'absolute',
-                  top: '50px',
-                  right: 0,
-                  width: '240px',
-                  backgroundColor: '#ffffff',
-                  borderRadius: '18px',
-                  boxShadow: '0 20px 40px rgba(0,0,0,0.15)',
-                  border: '1px solid #e2e8f0',
-                  padding: '12px',
-                  zIndex: 60
-                }}>
-                  <div style={{ padding: '8px 10px', borderBottom: '1px solid #f1f5f9', marginBottom: '8px' }}>
-                    <div style={{ fontWeight: 700, fontSize: '0.9375rem', color: '#0f172a' }}>{currentUser.name}</div>
-                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{currentUser.email}</div>
-                    <div style={{
-                      display: 'inline-block',
-                      marginTop: '6px',
-                      padding: '2px 8px',
-                      borderRadius: '9999px',
-                      fontSize: '0.7rem',
-                      fontWeight: 700,
-                      backgroundColor: 'var(--primary-mint)',
-                      color: 'var(--primary-deep)'
-                    }}>
-                      Role: {role.toUpperCase()}
+                {showUserMenu && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '50px',
+                    right: 0,
+                    width: '240px',
+                    backgroundColor: '#ffffff',
+                    borderRadius: '18px',
+                    boxShadow: '0 20px 40px rgba(0,0,0,0.15)',
+                    border: '1px solid #e2e8f0',
+                    padding: '12px',
+                    zIndex: 60
+                  }}>
+                    <div style={{ padding: '8px 10px', borderBottom: '1px solid #f1f5f9', marginBottom: '8px' }}>
+                      <div style={{ fontWeight: 700, fontSize: '0.9375rem', color: '#0f172a' }}>{currentUser.name}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{currentUser.email}</div>
+                      <div style={{
+                        display: 'inline-block',
+                        marginTop: '6px',
+                        padding: '2px 8px',
+                        borderRadius: '9999px',
+                        fontSize: '0.7rem',
+                        fontWeight: 700,
+                        backgroundColor: 'var(--primary-mint)',
+                        color: 'var(--primary-deep)'
+                      }}>
+                        Role: {role.toUpperCase()}
+                      </div>
                     </div>
-                  </div>
 
-                  <Link
-                    href="/bookings"
-                    onClick={() => setShowUserMenu(false)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      padding: '8px 10px',
-                      borderRadius: '8px',
-                      fontSize: '0.875rem',
-                      color: '#334155'
-                    }}
-                  >
-                    <Calendar size={16} color="var(--primary)" />
-                    <span>My Bookings</span>
-                  </Link>
-
-                  <Link
-                    href="/profile"
-                    onClick={() => setShowUserMenu(false)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      padding: '8px 10px',
-                      borderRadius: '8px',
-                      fontSize: '0.875rem',
-                      color: '#334155'
-                    }}
-                  >
-                    <User size={16} color="#64748b" />
-                    <span>Profile</span>
-                  </Link>
-
-                  <div style={{ borderTop: '1px solid #f1f5f9', marginTop: '6px', paddingTop: '6px' }}>
-                    <button
-                      onClick={() => {
-                        setShowUserMenu(false);
-                        logout();
-                      }}
+                    <Link
+                      href="/bookings"
+                      onClick={() => setShowUserMenu(false)}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -406,20 +370,75 @@ export const Navbar: React.FC = () => {
                         padding: '8px 10px',
                         borderRadius: '8px',
                         fontSize: '0.875rem',
-                        color: '#ef4444',
-                        background: 'none',
-                        border: 'none',
-                        width: '100%',
-                        cursor: 'pointer'
+                        color: '#334155'
                       }}
                     >
-                      <LogOut size={16} />
-                      <span>Sign Out</span>
-                    </button>
+                      <Calendar size={16} color="var(--primary)" />
+                      <span>My Bookings</span>
+                    </Link>
+
+                    <Link
+                      href="/profile"
+                      onClick={() => setShowUserMenu(false)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '8px 10px',
+                        borderRadius: '8px',
+                        fontSize: '0.875rem',
+                        color: '#334155'
+                      }}
+                    >
+                      <User size={16} color="#64748b" />
+                      <span>Profile</span>
+                    </Link>
+
+                    <div style={{ borderTop: '1px solid #f1f5f9', marginTop: '6px', paddingTop: '6px' }}>
+                      <button
+                        onClick={() => {
+                          setShowUserMenu(false);
+                          logout();
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          padding: '8px 10px',
+                          borderRadius: '8px',
+                          fontSize: '0.875rem',
+                          color: '#ef4444',
+                          background: 'none',
+                          border: 'none',
+                          width: '100%',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <LogOut size={16} />
+                        <span>Sign Out</span>
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Link
+                  href="/login"
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '12px',
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                    color: '#0f172a',
+                    textDecoration: 'none',
+                    backgroundColor: '#f1f5f9'
+                  }}
+                >
+                  Sign In
+                </Link>
+              </div>
+            )}
 
             {/* Quick "Book Now" CTA Button */}
             <Link

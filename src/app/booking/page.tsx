@@ -24,7 +24,14 @@ import {
 function BookingForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { services, cleaners, currentUser, createBooking, draftBooking } = useCleanNest();
+  const { services, cleaners, currentUser, createBooking, draftBooking, isInitialized } = useCleanNest();
+
+  useEffect(() => {
+    if (isInitialized && !currentUser) {
+      alert('You must sign in to proceed with booking! Please sign in first.');
+      router.push('/login');
+    }
+  }, [currentUser, isInitialized, router]);
 
   const serviceSlug = searchParams.get('service') || 'home-cleaning';
   const packageParam = searchParams.get('package');
@@ -162,9 +169,9 @@ function BookingForm() {
 
     try {
       const created = await createBooking({
-        customerId: currentUser.id,
-        customerName: currentUser.name,
-        customerPhone: currentUser.phone || '+1 (555) 019-2834',
+        customerId: currentUser?.id || 'guest-customer',
+        customerName: currentUser?.name || 'Customer',
+        customerPhone: currentUser?.phone || '+94 77 123 4567',
         customerAddress: {
           street: streetAddress,
           apartment: apt,

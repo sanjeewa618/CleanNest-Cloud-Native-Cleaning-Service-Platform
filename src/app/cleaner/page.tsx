@@ -35,8 +35,25 @@ export default function CleanerOverviewPage() {
   } = useCleanNest();
   const router = useRouter();
 
-  // Find the logged-in cleaner
-  const cleaner = cleaners.find(c => c.id === currentUser?.id) || cleaners[0];
+  // Find the logged-in cleaner specifically for currentUser without hardcoded fallback
+  const cleaner = cleaners.find(c => c.id === currentUser?.id || (currentUser?.email && c.email?.toLowerCase() === currentUser?.email.toLowerCase())) || (
+    currentUser && (currentUser.role === 'cleaner' || (currentUser.role as string) === 'CLEANER') ? {
+      id: currentUser.id,
+      name: currentUser.name || 'Cleaner',
+      email: currentUser.email || '',
+      phone: currentUser.phone || '',
+      avatar: currentUser.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name || 'Cleaner')}&background=random`,
+      role: 'Professional Cleaner',
+      rating: 5.0,
+      reviewCount: 0,
+      jobsCompleted: 0,
+      isOnline: true,
+      status: 'ACTIVE',
+      specialties: ['Home Cleaning'],
+      earnings: { today: 0, thisWeek: 0, total: 0 },
+      availability: ['09:00 AM - 12:00 PM', '01:00 PM - 04:00 PM', '05:00 PM - 08:00 PM']
+    } : null
+  );
 
   useEffect(() => {
     if (isInitialized && (!currentUser || currentUser.role !== 'cleaner')) {
@@ -48,13 +65,9 @@ export default function CleanerOverviewPage() {
     return <div style={{ padding: '80px', textAlign: 'center' }}>Loading cleaner profile...</div>;
   }
 
-  // Filter bookings for this cleaner
+  // Filter bookings strictly assigned to this cleaner by unique ID
   const cleanerBookings = bookings.filter(
-    (b) =>
-      b.cleanerId === cleaner.id ||
-      b.cleanerName === cleaner.name ||
-      !b.cleanerId ||
-      (cleaner.specialties && cleaner.specialties.includes(b.serviceName))
+    (b) => Boolean(b.cleanerId) && b.cleanerId === cleaner.id
   );
 
   const activeJobs = cleanerBookings.filter(
@@ -69,8 +82,8 @@ export default function CleanerOverviewPage() {
   const thisWeekEarnings = (cleaner.earnings?.thisWeek || 0) + completedEarningsTotal;
   const totalLifetimeEarnings = (cleaner.earnings?.total || 0) + completedEarningsTotal;
 
-  // Filter active (non-dismissed) alerts for this cleaner
-  const pendingAlerts = cleanerAlerts.filter((a) => !a.dismissed && (!a.cleanerId || a.cleanerId === cleaner.id));
+  // Filter active (non-dismissed) alerts for this cleaner specifically or matching their specialties
+  const pendingAlerts = cleanerAlerts.filter((a) => !a.dismissed && (a.cleanerId === cleaner.id || (!a.cleanerId && cleaner.specialties?.includes(a.serviceName))));
 
   return (
     <div>

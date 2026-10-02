@@ -52,8 +52,8 @@ export interface CleanerAlert {
 interface CleanNestContextType {
   role: UserRole;
   setRole: (role: UserRole) => void;
-  currentUser: UserProfile;
-  setCurrentUser: (user: UserProfile) => void;
+  currentUser: UserProfile | null;
+  setCurrentUser: (user: UserProfile | null) => void;
   currentLocation: string;
   setCurrentLocation: (loc: string) => void;
   services: ServiceItem[];
@@ -90,38 +90,11 @@ interface CleanNestContextType {
   isInitialized: boolean;
 }
 
-const DEFAULT_USERS: Record<UserRole, UserProfile> = {
-  customer: {
-    id: 'usr-alex',
-    name: 'Alex Morgan',
-    email: 'alex.m@example.com',
-    role: 'customer',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
-    phone: '+1 (555) 019-2834',
-    address: '742 Evergreen Terrace, Apt 4B, New York, NY'
-  },
-  cleaner: {
-    id: 'cln-1',
-    name: 'Marcus Vance',
-    email: 'marcus.v@cleannest.com',
-    role: 'cleaner',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80',
-    phone: '+1 (555) 234-8901'
-  },
-  admin: {
-    id: 'adm-1',
-    name: 'Eleanor Sterling',
-    email: 'admin@cleannest.com',
-    role: 'admin',
-    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&q=80'
-  }
-};
-
 const CleanNestContext = createContext<CleanNestContextType | undefined>(undefined);
 
 export const CleanNestProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [role, setRoleState] = useState<UserRole>('customer');
-  const [currentUser, setCurrentUser] = useState<UserProfile>(DEFAULT_USERS.customer);
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [currentLocation, setCurrentLocation] = useState<string>('New York, NY');
   const [services, setServices] = useState<ServiceItem[]>(INITIAL_SERVICES);
   const [cleaners, setCleaners] = useState<Cleaner[]>([]);
@@ -161,10 +134,17 @@ export const CleanNestProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         const cleanersRes = await fetch('http://localhost:5000/api/cleaners');
         if (cleanersRes.ok) {
           const cleanersData = await cleanersRes.json();
-          // Map category string to specialties array for frontend compatibility
+          // Map category string to specialties array for frontend compatibility and ensure clean defaults
           const formattedCleaners = cleanersData.map((c: any) => ({
             ...c,
-            specialties: c.category ? [c.category] : []
+            specialties: c.category ? [c.category] : ['Home Cleaning'],
+            role: c.category || 'Professional Cleaner',
+            rating: typeof c.rating === 'number' ? c.rating : 5.0,
+            reviewCount: typeof c.reviewCount === 'number' ? c.reviewCount : 0,
+            jobsCompleted: typeof c.jobsCount === 'number' ? c.jobsCount : 0,
+            isOnline: c.isOnline ?? true,
+            earnings: c.earnings || { today: 0, thisWeek: 0, total: 0 },
+            availability: c.availability || ['09:00 AM - 12:00 PM', '01:00 PM - 04:00 PM', '05:00 PM - 08:00 PM']
           }));
           setCleaners(formattedCleaners);
         }
@@ -348,8 +328,8 @@ export const CleanNestProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     localStorage.removeItem('cleannest_user');
     localStorage.removeItem('cleannest_role');
     
-    // Revert to default so UI doesn't crash on null properties
-    setCurrentUser(DEFAULT_USERS.customer);
+    // Revert to unauthenticated state
+    setCurrentUser(null);
     setRoleState('customer');
     setBookings([]);
     
@@ -357,6 +337,12 @@ export const CleanNestProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const createBooking = async (newBookingData: Omit<Booking, 'id' | 'bookingCode' | 'createdAt'>): Promise<Booking> => {
+    if (!currentUser) {
+      alert('You must sign in to proceed with booking! Please sign in first.');
+      window.location.href = '/login';
+      throw new Error('Sign in required to create a booking');
+    }
+
     const token = localStorage.getItem('cleannest_token');
     
     // Convert human-readable selectedDate (e.g. "Tomorrow, Oct 2nd") to a real ISO date
@@ -541,8 +527,9 @@ export const CleanNestProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           prev.map((c) => (c.id === cleanerId ? { ...c, ...data } : c))
         );
         // Also update currentUser if it matches
-        if (currentUser.id === cleanerId) {
+        if (currentUser?.id === cleanerId) {
           setCurrentUser(prev => {
+            if (!prev) return null;
             const updatedUser = {
               ...prev,
               name: data.name || prev.name,
@@ -728,10 +715,7 @@ export const CleanNestProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const payout = (targetBooking?.totalAmount || 0) * 0.85;
       setCleaners((prev) =>
         prev.map((c) => {
-          const isTarget =
-            (targetBooking?.cleanerId && c.id === targetBooking.cleanerId) ||
-            (targetBooking?.cleanerName && c.name === targetBooking.cleanerName) ||
-            (currentUser?.id === c.id);
+          const isTarget = Boolean(targetBooking?.cleanerId) && c.id === targetBooking?.cleanerId;
           if (isTarget) {
             return {
               ...c,
@@ -814,6 +798,19 @@ export const CleanNestProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const acceptBooking = (bookingId: string) => {
+    if (currentUser?.role === 'cleaner' && currentUser?.id) {
+      setBookings((prev) => {
+        const updated = prev.map((b) =>
+          b.id === bookingId
+            ? { ...b, cleanerId: currentUser.id, cleanerName: currentUser.name || 'Cleaner', cleanerPhone: currentUser.phone || '', cleanerAvatar: currentUser.avatar || '', status: 'accepted' as Booking['status'] }
+            : b
+        );
+        try {
+          localStorage.setItem('cleannest_local_bookings', JSON.stringify(updated));
+        } catch {}
+        return updated;
+      });
+    }
     updateBookingStatus(bookingId, 'accepted');
   };
 
@@ -866,8 +863,8 @@ export const CleanNestProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     if (booking) {
       const newReview: CustomerReview = {
         id: `rev-${Date.now()}`,
-        customerName: booking.customerName || currentUser.name || 'Customer',
-        avatar: currentUser.avatar,
+        customerName: booking.customerName || currentUser?.name || 'Customer',
+        avatar: currentUser?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(booking.customerName || 'Customer')}&background=random`,
         rating,
         date: 'Today',
         comment,

@@ -28,7 +28,7 @@ export default function ServiceDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { services, cleaners, reviews, setDraftBooking } = useCleanNest();
+  const { services, cleaners, reviews, setDraftBooking, currentUser } = useCleanNest();
 
   const preselectedCleanerId = searchParams?.get('cleaner');
   const selectedCleaner = preselectedCleanerId ? cleaners.find(c => c.id === preselectedCleanerId) : null;
@@ -66,6 +66,12 @@ export default function ServiceDetailsPage() {
   };
 
   const handleBookNow = () => {
+    if (!currentUser) {
+      alert('You must sign in to proceed with booking! Please sign in first.');
+      router.push('/login');
+      return;
+    }
+
     setDraftBooking({
       serviceId: service.id,
       serviceName: service.name,

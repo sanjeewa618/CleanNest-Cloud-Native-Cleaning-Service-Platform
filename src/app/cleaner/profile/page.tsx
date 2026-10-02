@@ -33,7 +33,25 @@ export default function CleanerProfilePage() {
   } = useCleanNest();
   const router = useRouter();
 
-  const cleaner = cleaners.find(c => c.id === currentUser?.id) || cleaners[0];
+  // Find the logged-in cleaner specifically for currentUser without hardcoded fallback
+  const cleaner = cleaners.find(c => c.id === currentUser?.id || (currentUser?.email && c.email?.toLowerCase() === currentUser?.email.toLowerCase())) || (
+    currentUser && (currentUser.role === 'cleaner' || (currentUser.role as string) === 'CLEANER') ? {
+      id: currentUser.id,
+      name: currentUser.name || 'Cleaner',
+      email: currentUser.email || '',
+      phone: currentUser.phone || '',
+      avatar: currentUser.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name || 'Cleaner')}&background=random`,
+      role: 'Professional Cleaner',
+      rating: 5.0,
+      reviewCount: 0,
+      jobsCompleted: 0,
+      isOnline: true,
+      status: 'ACTIVE',
+      specialties: ['Home Cleaning'],
+      earnings: { today: 0, thisWeek: 0, total: 0 },
+      availability: ['09:00 AM - 12:00 PM', '01:00 PM - 04:00 PM', '05:00 PM - 08:00 PM']
+    } : null
+  );
 
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [editForm, setEditForm] = useState({

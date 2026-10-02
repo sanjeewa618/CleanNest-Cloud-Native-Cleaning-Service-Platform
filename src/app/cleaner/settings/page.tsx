@@ -1,9 +1,23 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useCleanNest } from '@/context/CleanNestContext';
 import { Settings, Bell, CreditCard, Shield, Save } from 'lucide-react';
 
 export default function CleanerSettingsPage() {
+  const { currentUser, isInitialized } = useCleanNest();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isInitialized && (!currentUser || currentUser.role !== 'cleaner')) {
+      router.push('/login');
+    }
+  }, [currentUser, isInitialized, router]);
+
+  if (!isInitialized) {
+    return <div style={{ padding: '80px', textAlign: 'center' }}>Loading settings...</div>;
+  }
   return (
     <div>
       <div style={{ marginBottom: '32px' }}>
