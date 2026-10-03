@@ -250,16 +250,18 @@ export const CleanNestProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           console.error('Failed to fetch backend bookings', err);
         }
 
-        // If backend bookings exist, they are the single source of truth
-        let finalBookings: Booking[] = [];
-        if (backendMappedBookings.length > 0) {
-          finalBookings = backendMappedBookings;
-          try {
-            localStorage.setItem('cleannest_local_bookings', JSON.stringify(finalBookings));
-          } catch {}
-        } else {
-          finalBookings = savedLocalBookings;
-        }
+        // Seamlessly merge backend bookings with any saved local bookings by ID
+        const mergedBookingsMap = new Map<string, Booking>();
+        savedLocalBookings.forEach((b) => {
+          if (b.id) mergedBookingsMap.set(b.id, b);
+        });
+        backendMappedBookings.forEach((b) => {
+          if (b.id) mergedBookingsMap.set(b.id, b);
+        });
+        const finalBookings: Booking[] = Array.from(mergedBookingsMap.values());
+        try {
+          localStorage.setItem('cleannest_local_bookings', JSON.stringify(finalBookings));
+        } catch {}
 
         setBookings(finalBookings);
       } catch (err) {
@@ -336,6 +338,11 @@ export const CleanNestProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     };
 
     // Convert frontend structure to backend schema structure
+    // Only pass cleanerId if it looks like a real DB UUID (not a mock ID like 'cleaner-1')
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const rawCleanerId = newBookingData.cleanerId;
+    const validCleanerId = rawCleanerId && uuidRegex.test(rawCleanerId) ? rawCleanerId : undefined;
+
     const backendData = {
       serviceType: newBookingData.serviceName,
       date: parseBookingDate(newBookingData.selectedDate),
@@ -343,11 +350,11 @@ export const CleanNestProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       price: newBookingData.totalAmount,
       address: `${newBookingData.customerAddress.street}, ${newBookingData.customerAddress.city}`,
       notes: newBookingData.customerAddress.notes,
-      cleanerId: newBookingData.cleanerId,
+      cleanerId: validCleanerId,
       customerName: newBookingData.customerName || currentUser?.name,
       customerEmail: newBookingData.customerEmail || currentUser?.email,
       cleanerName: newBookingData.cleanerName,
-      cleanerEmail: newBookingData.cleanerEmail || cleaners.find(c => c.id === newBookingData.cleanerId)?.email
+      cleanerEmail: newBookingData.cleanerEmail || cleaners.find(c => c.id === rawCleanerId)?.email
     };
 
 
@@ -413,6 +420,11 @@ export const CleanNestProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           ]);
 
           return newBooking;
+        } else {
+          // Log the API error so we can debug what went wrong
+          let errBody: any = {};
+          try { errBody = await res.json(); } catch {}
+          console.error(`[createBooking] API error ${res.status}:`, errBody);
         }
       } catch (err) {
         console.error('Failed to create booking on backend', err);

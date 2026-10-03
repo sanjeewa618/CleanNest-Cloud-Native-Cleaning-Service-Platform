@@ -39,13 +39,41 @@ export const createBooking = async (req: AuthRequest, res: Response) => {
     // Resolve cleanerName & cleanerEmail from database if cleanerId is provided
     let cleanerName = validatedData.cleanerName;
     let cleanerEmail = validatedData.cleanerEmail;
-    if (validatedData.cleanerId && (!cleanerName || !cleanerEmail)) {
+    let resolvedCleanerId = validatedData.cleanerId;
+
+    if (resolvedCleanerId) {
       const cln = await prisma.user.findUnique({
-        where: { id: validatedData.cleanerId },
-        select: { name: true, email: true }
+        where: { id: resolvedCleanerId },
+        select: { id: true, name: true, email: true }
       });
-      if (!cleanerName) cleanerName = cln?.name || undefined;
-      if (!cleanerEmail) cleanerEmail = cln?.email || undefined;
+      if (cln) {
+        // Valid cleaner in DB - use their details
+        if (!cleanerName) cleanerName = cln.name;
+        if (!cleanerEmail) cleanerEmail = cln.email;
+      } else {
+        // cleanerId does not match any DB user - try lookup by name/email fallback
+        console.warn(`[createBooking] cleanerId ${resolvedCleanerId} not found in DB - searching by name/email`);
+        resolvedCleanerId = undefined; // unset invalid FK
+
+        // Try to find cleaner by email or name passed from frontend
+        if (cleanerEmail || cleanerName) {
+          const fallbackCleaner = await prisma.user.findFirst({
+            where: {
+              role: 'CLEANER',
+              OR: [
+                ...(cleanerEmail ? [{ email: cleanerEmail }] : []),
+                ...(cleanerName ? [{ name: cleanerName }] : [])
+              ]
+            },
+            select: { id: true, name: true, email: true }
+          });
+          if (fallbackCleaner) {
+            resolvedCleanerId = fallbackCleaner.id;
+            if (!cleanerName) cleanerName = fallbackCleaner.name;
+            if (!cleanerEmail) cleanerEmail = fallbackCleaner.email;
+          }
+        }
+      }
     }
 
     const booking = await prisma.booking.create({
@@ -55,6 +83,7 @@ export const createBooking = async (req: AuthRequest, res: Response) => {
         customerId,
         customerName,
         customerEmail,
+        cleanerId: resolvedCleanerId,
         cleanerName,
         cleanerEmail
       } as any
@@ -87,10 +116,16 @@ export const getMyBookings = async (req: AuthRequest, res: Response) => {
       }
     }
 
+    const userRole = (role || '').toUpperCase();
     let bookings;
-    if (role === 'CUSTOMER' && userId) {
-      const userEmail = req.user?.email;
-      const userName = req.user?.name;
+    if (userRole === 'CUSTOMER' && userId) {
+      const customerUser = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, email: true, name: true }
+      });
+      const userEmail = customerUser?.email || req.user?.email;
+      const userName = customerUser?.name || req.user?.name;
+
       bookings = await prisma.booking.findMany({
         where: {
           OR: [
@@ -105,9 +140,14 @@ export const getMyBookings = async (req: AuthRequest, res: Response) => {
         },
         orderBy: { createdAt: 'desc' }
       });
-    } else if (role === 'CLEANER' && userId) {
-      const userEmail = req.user?.email;
-      const userName = req.user?.name;
+    } else if (userRole === 'CLEANER' && userId) {
+      const cleanerUser = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, email: true, name: true }
+      });
+      const userEmail = cleanerUser?.email || req.user?.email;
+      const userName = cleanerUser?.name || req.user?.name;
+
       bookings = await prisma.booking.findMany({
         where: {
           OR: [

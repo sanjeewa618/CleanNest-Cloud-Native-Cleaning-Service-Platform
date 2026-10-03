@@ -56,11 +56,15 @@ export default function CleanerBookingsPage() {
 
   // Filter bookings strictly assigned to this cleaner by unique ID, email, or name
   const cleanerBookings = bookings.filter((b) => {
-    if (!cleaner) return false;
+    if (!cleaner && !currentUser) return false;
+    const cId = cleaner?.id || currentUser?.id;
+    const cEmail = cleaner?.email?.toLowerCase() || currentUser?.email?.toLowerCase();
+    const cName = cleaner?.name?.trim().toLowerCase() || currentUser?.name?.trim().toLowerCase();
+
     return (
-      (Boolean(b.cleanerId) && b.cleanerId === cleaner.id) ||
-      (b.cleanerEmail && cleaner.email && b.cleanerEmail.toLowerCase() === cleaner.email.toLowerCase()) ||
-      (b.cleanerName && cleaner.name && b.cleanerName.trim().toLowerCase() === cleaner.name.trim().toLowerCase())
+      (Boolean(b.cleanerId) && (b.cleanerId === cId || b.cleanerId === cleaner?.id || b.cleanerId === currentUser?.id)) ||
+      (Boolean(b.cleanerEmail) && Boolean(cEmail) && b.cleanerEmail?.toLowerCase() === cEmail) ||
+      (Boolean(b.cleanerName) && Boolean(cName) && b.cleanerName?.trim().toLowerCase() === cName)
     );
   });
 

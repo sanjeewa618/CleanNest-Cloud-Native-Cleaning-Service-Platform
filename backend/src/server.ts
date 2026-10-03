@@ -25,38 +25,39 @@ app.use('/api/auth', authRoutes);
 app.use('/api/cleaners', cleanerRoutes);
 app.use('/api/bookings', bookingRoutes);
 
-// Auto-sync database columns & backfill existing booking records
+// Backfill existing booking records with customer and cleaner name/email
 async function syncDatabaseSchema() {
   try {
     const prisma = require('./utils/prisma').default;
-    await prisma.$executeRawUnsafe(`
-      ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS "customerName" TEXT;
-      ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS "customerEmail" TEXT;
-      ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS "cleanerName" TEXT;
-      ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS "cleanerEmail" TEXT;
-    `);
 
-    // Backfill customer names & emails
+    // Each statement must be a separate executeRawUnsafe call (PostgreSQL does not
+    // allow multiple commands in a single prepared statement).
+
+    // Backfill customer names & emails from User table
     await prisma.$executeRawUnsafe(`
       UPDATE "Booking" b
       SET "customerName" = u.name,
           "customerEmail" = u.email
       FROM "User" u
-      WHERE b."customerId" = u.id AND (b."customerEmail" IS NULL OR b."customerEmail" = '' OR b."customerName" IS NULL OR b."customerName" = '');
+      WHERE b."customerId" = u.id
+        AND (b."customerEmail" IS NULL OR b."customerEmail" = ''
+             OR b."customerName" IS NULL OR b."customerName" = '')
     `);
 
-    // Backfill cleaner names & emails
+    // Backfill cleaner names & emails from User table
     await prisma.$executeRawUnsafe(`
       UPDATE "Booking" b
       SET "cleanerName" = u.name,
           "cleanerEmail" = u.email
       FROM "User" u
-      WHERE b."cleanerId" = u.id AND (b."cleanerEmail" IS NULL OR b."cleanerEmail" = '' OR b."cleanerName" IS NULL OR b."cleanerName" = '');
+      WHERE b."cleanerId" = u.id
+        AND (b."cleanerEmail" IS NULL OR b."cleanerEmail" = ''
+             OR b."cleanerName" IS NULL OR b."cleanerName" = '')
     `);
 
-    console.log('✅ Database schema and existing booking records synchronized with customerName, customerEmail, cleanerName, and cleanerEmail!');
+    console.log('✅ Booking records backfilled with customerName, customerEmail, cleanerName, cleanerEmail!');
   } catch (error) {
-    console.error('Database schema sync notice:', error);
+    console.error('Database sync notice:', error);
   }
 }
 
