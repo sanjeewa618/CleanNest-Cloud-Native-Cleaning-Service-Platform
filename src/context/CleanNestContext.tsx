@@ -183,6 +183,7 @@ export const CleanNestProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         }
 
         let backendMappedBookings: Booking[] = [];
+        let bookingsFetched = false;
         try {
           const headers: Record<string, string> = {};
           if (token) {
@@ -190,6 +191,7 @@ export const CleanNestProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           }
           const bookingsRes = await fetch('http://localhost:5000/api/bookings', { headers });
           if (bookingsRes.ok) {
+            bookingsFetched = true;
             const bookingsData = await bookingsRes.json();
             if (Array.isArray(bookingsData)) {
               backendMappedBookings = bookingsData.map((b: any) => {
@@ -250,20 +252,15 @@ export const CleanNestProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           console.error('Failed to fetch backend bookings', err);
         }
 
-        // Seamlessly merge backend bookings with any saved local bookings by ID
-        const mergedBookingsMap = new Map<string, Booking>();
-        savedLocalBookings.forEach((b) => {
-          if (b.id) mergedBookingsMap.set(b.id, b);
-        });
-        backendMappedBookings.forEach((b) => {
-          if (b.id) mergedBookingsMap.set(b.id, b);
-        });
-        const finalBookings: Booking[] = Array.from(mergedBookingsMap.values());
-        try {
-          localStorage.setItem('cleannest_local_bookings', JSON.stringify(finalBookings));
-        } catch {}
-
-        setBookings(finalBookings);
+        // When connected to backend, backend database is the single source of truth!
+        // LocalStorage is strictly synced with active DB bookings, purging phantom data.
+        if (bookingsFetched) {
+          localStorage.setItem('cleannest_local_bookings', JSON.stringify(backendMappedBookings));
+          setBookings(backendMappedBookings);
+        } else {
+          // Fallback only if backend is unreachable
+          setBookings(savedLocalBookings);
+        }
       } catch (err) {
         console.error('Failed to fetch API data', err);
       }

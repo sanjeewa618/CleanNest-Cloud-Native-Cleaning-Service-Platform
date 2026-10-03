@@ -16,10 +16,11 @@ const registerSchema = z.object({
 export const register = async (req: Request, res: Response) => {
   try {
     const validatedData = registerSchema.parse(req.body);
+    const normalizedEmail = validatedData.email.trim().toLowerCase();
     
-    // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email: validatedData.email }
+    // Check if user already exists (case-insensitive)
+    const existingUser = await prisma.user.findFirst({
+      where: { email: { equals: normalizedEmail, mode: 'insensitive' } }
     });
 
     if (existingUser) {
@@ -29,10 +30,11 @@ export const register = async (req: Request, res: Response) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(validatedData.password, 10);
 
-    // Create user
+    // Create user with normalized email
     const user = await prisma.user.create({
       data: {
         ...validatedData,
+        email: normalizedEmail,
         password: hashedPassword,
         avatar: validatedData.role === 'CLEANER' 
           ? 'https://ui-avatars.com/api/?name=' + validatedData.name + '&background=random'
@@ -72,8 +74,10 @@ export const login = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
+    const normalizedEmail = email.trim().toLowerCase();
+
     // Hardcoded Admin Login
-    if (email === 'admin@cleannest.com' && password === 'Admin@1234') {
+    if (normalizedEmail === 'admin@cleannest.com' && password === 'Admin@1234') {
       const token = generateToken('adm-1', 'ADMIN');
       return res.json({
         message: 'Admin Login successful',
@@ -88,7 +92,9 @@ export const login = async (req: Request, res: Response) => {
       });
     }
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findFirst({
+      where: { email: { equals: normalizedEmail, mode: 'insensitive' } }
+    });
 
     if (!user) {
       return res.status(401).json({ error: 'Invalid email or password' });

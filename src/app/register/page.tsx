@@ -32,7 +32,7 @@ export default function RegisterPage() {
         },
         body: JSON.stringify({
           name: fullName,
-          email,
+          email: email.trim().toLowerCase(),
           password,
           phone,
           role: selectedRole === 'customer' ? 'CUSTOMER' : 'CLEANER',
