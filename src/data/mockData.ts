@@ -57,6 +57,7 @@ export interface Booking {
   bookingCode: string;
   customerId: string;
   customerName: string;
+  customerEmail?: string;
   customerPhone: string;
   customerAddress: {
     street: string;
@@ -75,9 +76,10 @@ export interface Booking {
   selectedTimeSlot: string;
   cleanerId?: string;
   cleanerName?: string;
+  cleanerEmail?: string;
   cleanerAvatar?: string;
   cleanerPhone?: string;
-  status: 'pending' | 'accepted' | 'on_the_way' | 'in_progress' | 'completed' | 'cancelled';
+  status: 'pending' | 'accepted' | 'confirmed' | 'on_the_way' | 'in_progress' | 'completed' | 'cancelled';
   subtotal: number;
   discount: number;
   serviceFee: number;

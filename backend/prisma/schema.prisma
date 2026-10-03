@@ -43,15 +43,19 @@ model Booking {
   timeSlot    String   // e.g. "09:00 AM - 11:00 AM"
   status      BookingStatus @default(PENDING)
   price       Float
-  address     String   // Location of the cleaning
-  notes       String?  // Special instructions
+  address      String   // Location of the cleaning
+  notes        String?  // Special instructions
+  customerName  String?  // Customer full name
+  customerEmail String?  // Customer email address
+  cleanerName   String?  // Assigned cleaner full name
+  cleanerEmail  String?  // Assigned cleaner email address
   
   // Relationships
-  customerId  String
-  customer    User     @relation("CustomerBookings", fields: [customerId], references: [id])
+  customerId   String
+  customer     User     @relation("CustomerBookings", fields: [customerId], references: [id])
   
-  cleanerId   String?
-  cleaner     User?    @relation("CleanerBookings", fields: [cleanerId], references: [id])
+  cleanerId    String?
+  cleaner      User?    @relation("CleanerBookings", fields: [cleanerId], references: [id])
   
   review      Review?  // A booking can have one review
 

@@ -65,25 +65,73 @@ export default function CleanerOverviewPage() {
     return <div style={{ padding: '80px', textAlign: 'center' }}>Loading cleaner profile...</div>;
   }
 
-  // Filter bookings strictly assigned to this cleaner by unique ID
-  const cleanerBookings = bookings.filter(
-    (b) => Boolean(b.cleanerId) && b.cleanerId === cleaner.id
-  );
+  // Filter bookings strictly assigned to this cleaner by unique ID, email, or name
+  const cleanerBookings = bookings.filter((b) => {
+    if (!cleaner) return false;
+    return (
+      (Boolean(b.cleanerId) && b.cleanerId === cleaner.id) ||
+      (b.cleanerEmail && cleaner.email && b.cleanerEmail.toLowerCase() === cleaner.email.toLowerCase()) ||
+      (b.cleanerName && cleaner.name && b.cleanerName.trim().toLowerCase() === cleaner.name.trim().toLowerCase())
+    );
+  });
 
   const activeJobs = cleanerBookings.filter(
-    (b) => b.status === 'accepted' || b.status === 'on_the_way' || b.status === 'in_progress'
+    (b) => b.status === 'accepted' || b.status === 'confirmed' || b.status === 'on_the_way' || b.status === 'in_progress'
   );
 
   const completedJobs = cleanerBookings.filter((b) => b.status === 'completed');
 
-  // Compute dynamic completed jobs revenue (85% cleaner payout)
-  const completedEarningsTotal = completedJobs.reduce((sum, b) => sum + ((b.totalAmount || (b as any).price || 0) * 0.85), 0);
-  const todayEarnings = (cleaner.earnings?.today || 0) + completedEarningsTotal;
-  const thisWeekEarnings = (cleaner.earnings?.thisWeek || 0) + completedEarningsTotal;
-  const totalLifetimeEarnings = (cleaner.earnings?.total || 0) + completedEarningsTotal;
+  // Accepted & confirmed bookings (all non-cancelled, non-pending jobs)
+  const acceptedBookings = cleanerBookings.filter((b) => b.status !== 'cancelled' && b.status !== 'pending');
 
-  // Filter active (non-dismissed) alerts for this cleaner specifically or matching their specialties
-  const pendingAlerts = cleanerAlerts.filter((a) => !a.dismissed && (a.cleanerId === cleaner.id || (!a.cleanerId && cleaner.specialties?.includes(a.serviceName))));
+  const isDateToday = (b: any): boolean => {
+    const today = new Date();
+    const todayDateStr = today.toDateString();
+    if (b.createdAt) {
+      const d = new Date(b.createdAt);
+      if (!isNaN(d.getTime()) && d.toDateString() === todayDateStr) return true;
+    }
+    if (b.date) {
+      const d = new Date(b.date);
+      if (!isNaN(d.getTime()) && d.toDateString() === todayDateStr) return true;
+    }
+    if (b.selectedDate) {
+      const s = String(b.selectedDate).toLowerCase();
+      if (s.includes('today')) return true;
+      const d = new Date(b.selectedDate);
+      if (!isNaN(d.getTime()) && d.toDateString() === todayDateStr) return true;
+    }
+    return false;
+  };
+
+  const isDateThisWeek = (b: any): boolean => {
+    const now = new Date();
+    const startOfWeek = new Date(now);
+    const day = now.getDay();
+    const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+    startOfWeek.setDate(diff);
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 7);
+
+    const d = b.createdAt ? new Date(b.createdAt) : (b.date ? new Date(b.date) : (b.selectedDate ? new Date(b.selectedDate) : null));
+    if (d && !isNaN(d.getTime())) {
+      return d >= startOfWeek && d < endOfWeek;
+    }
+    return isDateToday(b);
+  };
+
+  const todayAcceptedJobs = acceptedBookings.filter((b) => isDateToday(b));
+  const thisWeekAcceptedJobs = acceptedBookings.filter((b) => isDateThisWeek(b));
+
+  // Compute dynamic revenue (total payments received across accepted & confirmed bookings)
+  const todayEarnings = todayAcceptedJobs.reduce((sum, b) => sum + (Number(b.totalAmount || (b as any).price) || 0), 0);
+  const thisWeekEarnings = thisWeekAcceptedJobs.reduce((sum, b) => sum + (Number(b.totalAmount || (b as any).price) || 0), 0);
+  const totalLifetimeEarnings = acceptedBookings.reduce((sum, b) => sum + (Number(b.totalAmount || (b as any).price) || 0), 0);
+
+  // Filter active (non-dismissed) alerts for this cleaner specifically
+  const pendingAlerts = cleanerAlerts.filter((a) => !a.dismissed && (a.cleanerId === cleaner.id || (cleaner.email && (a as any).cleanerEmail?.toLowerCase() === cleaner.email.toLowerCase())));
 
   return (
     <div>
@@ -327,7 +375,7 @@ export default function CleanerOverviewPage() {
               </span>
               <span style={{ color: '#cbd5e1' }}>•</span>
               <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#15803d' }}>
-                {cleaner.jobsCompleted || 0} Completed Jobs
+                {completedJobs.length} Completed Jobs
               </span>
             </div>
           </div>
@@ -396,8 +444,8 @@ export default function CleanerOverviewPage() {
           <div style={{ fontSize: '1.85rem', fontWeight: 800, color: '#15803d' }}>
             Rs. {todayEarnings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
-          <div style={{ fontSize: '0.75rem', color: '#16a34a', fontWeight: 600, marginTop: '4px' }}>
-            +{completedJobs.length} completed jobs
+          <div style={{ fontSize: '0.75rem', color: todayAcceptedJobs.length > 0 ? '#16a34a' : '#64748b', fontWeight: 600, marginTop: '4px' }}>
+            +{todayAcceptedJobs.length} booking{todayAcceptedJobs.length === 1 ? '' : 's'} today
           </div>
         </div>
 
@@ -416,7 +464,7 @@ export default function CleanerOverviewPage() {
             Rs. {thisWeekEarnings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
-            Payout scheduled for Monday
+            {thisWeekAcceptedJobs.length} jobs this week
           </div>
         </div>
 
@@ -435,7 +483,7 @@ export default function CleanerOverviewPage() {
             Rs. {totalLifetimeEarnings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
-            Direct bank deposit verified
+            Across {acceptedBookings.length} total accepted bookings
           </div>
         </div>
 

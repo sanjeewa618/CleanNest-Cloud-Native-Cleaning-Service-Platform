@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  # 1. PostgreSQL Database Service
+  postgres:
+    image: postgres:16-alpine
+    container_name: cleannest-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: cleannest_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d cleannest_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 2. Backend API Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cleannest-backend
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      # Inside the Docker network, the database host is 'postgres' (the service name)
+      DATABASE_URL: "postgresql://postgres:1234@postgres:5432/cleannest_db?schema=public"
+      PORT: 5000
+      JWT_SECRET: "cleannest_super_secret_jwt_key_2026"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    # Automatically sync Prisma tables and start the backend
+    # after the database is ready
+    command: sh -c "npx prisma db push && npm start"
+
+  # 3. Frontend Web Service
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cleannest-frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: "http://localhost:5000/api"
+    depends_on:
+      - backend
+
+volumes:
+  # A volume to persist PostgreSQL data even if the container is removed
+  postgres_data:

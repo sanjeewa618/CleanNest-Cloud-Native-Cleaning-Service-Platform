@@ -72,6 +72,8 @@ export default function ServiceDetailsPage() {
       return;
     }
 
+    const assignedCleaner = selectedCleaner || (displayCleaners.length > 0 ? displayCleaners[0] : null);
+
     setDraftBooking({
       serviceId: service.id,
       serviceName: service.name,
@@ -79,14 +81,21 @@ export default function ServiceDetailsPage() {
       packageName: selectedPackage.name,
       pricePerHour: effectivePackageRate,
       hours: selectedHours,
-      subtotal: totalPrice
+      subtotal: totalPrice,
+      cleanerId: assignedCleaner?.id,
+      cleanerName: assignedCleaner?.name,
+      cleanerAvatar: assignedCleaner?.avatar,
+      cleanerPhone: assignedCleaner?.phone,
+      cleanerEmail: assignedCleaner?.email
     });
     const queryParams = new URLSearchParams({
       service: service.slug,
-      package: selectedPackage.id
+      package: selectedPackage.id,
+      hours: selectedHours.toString()
     });
-    if (preselectedCleanerId) {
-      queryParams.set('cleaner', preselectedCleanerId);
+    const cleanerToPass = preselectedCleanerId || assignedCleaner?.id;
+    if (cleanerToPass) {
+      queryParams.set('cleaner', cleanerToPass);
     }
     router.push(`/booking?${queryParams.toString()}`);
   };
@@ -570,33 +579,42 @@ export default function ServiceDetailsPage() {
               </div>
 
               {/* Price Calculation breakdown */}
-              <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '16px', marginBottom: '20px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: '#64748b', marginBottom: '8px' }}>
-                  <span>Rate (Rs. {effectivePackageRate.toLocaleString()} × {selectedHours} hrs)</span>
-                  <span>Rs. {(effectivePackageRate * selectedHours).toLocaleString()}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: '#64748b', marginBottom: '8px' }}>
-                  <span>Trust & Safety Fee</span>
-                  <span>Rs. 450</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: '#15803d', marginBottom: '12px', fontWeight: 600 }}>
-                  <span>First Booking Discount (CLEAN20)</span>
-                  <span>-Rs. 500.00</span>
-                </div>
+              {(() => {
+                const subtotalRate = effectivePackageRate * selectedHours;
+                const trustSafetyFee = 450;
+                const promoDiscount = subtotalRate * 0.2; // CLEAN20 20% promo
+                const totalEstimated = Math.max(0, subtotalRate + trustSafetyFee - promoDiscount);
 
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'baseline',
-                  borderTop: '1.5px dashed #cbd5e1',
-                  paddingTop: '12px'
-                }}>
-                  <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0f172a' }}>Total Estimated:</span>
-                  <span style={{ fontSize: '1.5rem', fontWeight: 800, color: '#15803d' }}>
-                    Rs. {Math.max(0, effectivePackageRate * selectedHours + 450 - 500).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </span>
-                </div>
-              </div>
+                return (
+                  <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '16px', marginBottom: '20px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: '#64748b', marginBottom: '8px' }}>
+                      <span>Rate (Rs. {effectivePackageRate.toLocaleString()} × {selectedHours} hrs)</span>
+                      <span>Rs. {subtotalRate.toLocaleString()}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: '#64748b', marginBottom: '8px' }}>
+                      <span>Trust & Safety Fee</span>
+                      <span>Rs. {trustSafetyFee.toLocaleString()}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: '#15803d', marginBottom: '12px', fontWeight: 600 }}>
+                      <span>20% Welcome Promo (CLEAN20)</span>
+                      <span>-Rs. {promoDiscount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    </div>
+
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'baseline',
+                      borderTop: '1.5px dashed #cbd5e1',
+                      paddingTop: '12px'
+                    }}>
+                      <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0f172a' }}>Total Estimated:</span>
+                      <span style={{ fontSize: '1.5rem', fontWeight: 800, color: '#15803d' }}>
+                        Rs. {totalEstimated.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Book Now Button - Matches Screen 3 Bottom Button */}
               <button

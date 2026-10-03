@@ -156,19 +156,26 @@ export const CleanNestProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           setCustomers(customersData);
         }
 
-        // Load saved local bookings
+        // Load saved local bookings (filtering out all legacy test bookings)
         let savedLocalBookings: Booking[] = [];
         try {
+          const legacyCodes = [
+            'bkg-101', 'bkg-102', 'bkg-103',
+            'CN-8921', 'CN-7452', 'CN-5120',
+            'CN-8432', 'CN-7240', 'CN-3B2E'
+          ];
           const saved = localStorage.getItem('cleannest_local_bookings');
           if (saved) {
             const parsed = JSON.parse(saved);
             if (Array.isArray(parsed)) {
               savedLocalBookings = parsed
-                .filter(b => !['bkg-101', 'bkg-102', 'bkg-103', 'CN-8921', 'CN-7452', 'CN-5120'].includes(b.id) && !['CN-8921', 'CN-7452', 'CN-5120'].includes(b.bookingCode))
+                .filter(b => !legacyCodes.includes(b.id) && !legacyCodes.includes(b.bookingCode))
                 .map(b => ({
                   ...b,
                   status: (b.status as any) === 'confirmed' ? 'accepted' : b.status
                 }));
+              // Permanently update local storage to clean state
+              localStorage.setItem('cleannest_local_bookings', JSON.stringify(savedLocalBookings));
             }
           }
         } catch {
@@ -176,123 +183,85 @@ export const CleanNestProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         }
 
         let backendMappedBookings: Booking[] = [];
-        if (token) {
-          try {
-            const bookingsRes = await fetch('http://localhost:5000/api/bookings', {
-              headers: {
-                'Authorization': `Bearer ${token}`
-              }
-            });
-            if (bookingsRes.ok) {
-              const bookingsData = await bookingsRes.json();
-              if (Array.isArray(bookingsData)) {
-                backendMappedBookings = bookingsData.map((b: any) => {
-                  const rawStatus = (b.status || 'pending').toLowerCase();
-                  let mappedStatus: Booking['status'] = 'pending';
-                  if (rawStatus === 'confirmed' || rawStatus === 'accepted') {
-                    mappedStatus = 'accepted';
-                  } else if (rawStatus === 'on_the_way') {
-                    mappedStatus = 'on_the_way';
-                  } else if (rawStatus === 'in_progress') {
-                    mappedStatus = 'in_progress';
-                  } else if (rawStatus === 'completed') {
-                    mappedStatus = 'completed';
-                  } else if (rawStatus === 'cancelled') {
-                    mappedStatus = 'cancelled';
-                  }
-
-                  return {
-                    id: b.id,
-                    bookingCode: `CN-${(b.id || '').substring(0, 4).toUpperCase() || '8821'}`,
-                    customerId: b.customerId || 'usr-cust',
-                    customerName: b.customer?.name || 'Customer',
-                    customerPhone: b.customer?.phone || '+1 (555) 019-2834',
-                    customerAddress: typeof b.address === 'object' && b.address !== null
-                      ? b.address
-                      : { street: b.address || 'Service Location', city: 'Kalutara' },
-                    serviceId: b.serviceId || 'srv-1',
-                    serviceName: b.serviceType || b.serviceName || 'Home Cleaning',
-                    packageId: b.packageId || 'pkg-1',
-                    packageName: b.packageName || 'Standard Clean',
-                    pricePerHour: b.pricePerHour || 80,
-                    hours: b.hours || 3,
-                    selectedDate: b.date ? (isNaN(new Date(b.date).getTime()) ? b.date : new Date(b.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })) : 'Today',
-                    selectedTimeSlot: b.timeSlot || '10:00 AM - 01:00 PM',
-                    cleanerId: b.cleanerId,
-                    cleanerName: b.cleaner?.name || b.cleanerName,
-                    cleanerAvatar: b.cleaner?.avatar || b.cleanerAvatar,
-                    cleanerPhone: b.cleaner?.phone || b.cleanerPhone,
-                    status: mappedStatus,
-                    subtotal: b.price || b.subtotal || 100,
-                    discount: b.discount || 0,
-                    serviceFee: b.serviceFee || 15,
-                    totalAmount: b.price || b.totalAmount || 115,
-                    paymentMethod: b.paymentMethod || 'card',
-                    paymentStatus: b.paymentStatus || 'paid',
-                    createdAt: b.createdAt || new Date().toISOString()
-                  };
-                });
-              }
-            }
-          } catch (err) {
-            console.error('Failed to fetch backend bookings', err);
+        try {
+          const headers: Record<string, string> = {};
+          if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
           }
+          const bookingsRes = await fetch('http://localhost:5000/api/bookings', { headers });
+          if (bookingsRes.ok) {
+            const bookingsData = await bookingsRes.json();
+            if (Array.isArray(bookingsData)) {
+              backendMappedBookings = bookingsData.map((b: any) => {
+                const rawStatus = (b.status || 'pending').toLowerCase();
+                let mappedStatus: Booking['status'] = 'pending';
+                if (rawStatus === 'confirmed') {
+                  mappedStatus = 'confirmed';
+                } else if (rawStatus === 'accepted') {
+                  mappedStatus = 'accepted';
+                } else if (rawStatus === 'on_the_way') {
+                  mappedStatus = 'on_the_way';
+                } else if (rawStatus === 'in_progress') {
+                  mappedStatus = 'in_progress';
+                } else if (rawStatus === 'completed') {
+                  mappedStatus = 'completed';
+                } else if (rawStatus === 'cancelled') {
+                  mappedStatus = 'cancelled';
+                }
+
+                const bookingPrice = typeof b.price === 'number' ? b.price : parseFloat(b.price) || 0;
+
+                return {
+                  id: b.id,
+                  bookingCode: `CN-${(b.id || '').substring(0, 4).toUpperCase() || '8821'}`,
+                  customerId: b.customerId || 'usr-cust',
+                  customerName: b.customerName || b.customer?.name || 'Customer',
+                  customerEmail: b.customerEmail || b.customer?.email,
+                  customerPhone: b.customer?.phone || '+94 77 123 4567',
+                  customerAddress: typeof b.address === 'object' && b.address !== null
+                    ? { ...b.address, notes: b.notes || b.address.notes }
+                    : { street: b.address || 'Service Location', city: 'Colombo', notes: b.notes },
+                  serviceId: b.serviceId || 'srv-1',
+                  serviceName: b.serviceType || b.serviceName || 'Home Cleaning',
+                  packageId: b.packageId || 'pkg-std',
+                  packageName: b.packageName || 'Standard Clean',
+                  pricePerHour: bookingPrice,
+                  hours: b.hours || 3,
+                  selectedDate: b.date ? (isNaN(new Date(b.date).getTime()) ? b.date : new Date(b.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })) : 'Today',
+                  selectedTimeSlot: b.timeSlot || '10:00 AM - 01:00 PM',
+                  cleanerId: b.cleanerId,
+                  cleanerName: b.cleanerName || b.cleaner?.name || b.cleanerName || 'Marcus Vance',
+                  cleanerEmail: b.cleanerEmail || b.cleaner?.email,
+                  cleanerAvatar: b.cleaner?.avatar || b.cleanerAvatar,
+                  cleanerPhone: b.cleaner?.phone || b.cleanerPhone || '+94 71 234 8901',
+                  status: mappedStatus,
+                  subtotal: bookingPrice,
+                  discount: 0,
+                  serviceFee: 0,
+                  totalAmount: bookingPrice,
+                  paymentMethod: b.paymentMethod || 'card',
+                  paymentStatus: b.paymentStatus || 'paid',
+                  createdAt: b.createdAt || new Date().toISOString()
+                };
+              });
+            }
+          }
+        } catch (err) {
+          console.error('Failed to fetch backend bookings', err);
         }
 
-        // Merge: backend bookings first, then local user bookings (so local status updates take precedence!)
-        const mergedMap = new Map<string, Booking>();
-        backendMappedBookings.forEach(b => mergedMap.set(b.id, b));
-        savedLocalBookings.forEach(b => {
-          const backendBooking = mergedMap.get(b.id);
-          if (backendBooking) {
-            mergedMap.set(b.id, {
-              ...backendBooking,
-              ...b,
-              status: b.status || backendBooking.status
-            });
-          } else {
-            mergedMap.set(b.id, b);
-          }
-        });
-        const allBookings = Array.from(mergedMap.values());
-        let activeServices = INITIAL_SERVICES;
-        try {
-          const savedServices = localStorage.getItem('cleannest_services');
-          if (savedServices) {
-            const parsedServices = JSON.parse(savedServices);
-            if (Array.isArray(parsedServices) && parsedServices.length > 0) {
-              activeServices = parsedServices;
-              setServices(parsedServices);
-            }
-          }
-        } catch {}
+        // If backend bookings exist, they are the single source of truth
+        let finalBookings: Booking[] = [];
+        if (backendMappedBookings.length > 0) {
+          finalBookings = backendMappedBookings;
+          try {
+            localStorage.setItem('cleannest_local_bookings', JSON.stringify(finalBookings));
+          } catch {}
+        } else {
+          finalBookings = savedLocalBookings;
+        }
 
-        // Sync existing booking prices and totals with active service rates
-        const syncedBookings = allBookings.map((b) => {
-          const srv = activeServices.find((s) => s.id === b.serviceId || s.name === b.serviceName);
-          if (!srv) return b;
-          const pkg = srv.packages?.find((p) => p.id === b.packageId || p.name === b.packageName);
-          const pkgRate = pkg ? pkg.pricePerHour : srv.basePrice;
-          const discountPercent = srv.discountPercent || 0;
-          const effectiveRate = discountPercent > 0
-            ? Math.round(pkgRate * (1 - discountPercent / 100))
-            : pkgRate;
-          const hours = b.hours || 3;
-          const newSubtotal = effectiveRate * hours;
-          const serviceFee = b.serviceFee || 450;
-          const newTotalAmount = newSubtotal + serviceFee;
-          const newDiscount = discountPercent > 0 ? (pkgRate * hours - newSubtotal) : (b.discount || 0);
-
-          return {
-            ...b,
-            pricePerHour: effectiveRate,
-            subtotal: newSubtotal,
-            discount: newDiscount,
-            totalAmount: newTotalAmount
-          };
-        });
-
-        setBookings(syncedBookings);
+        setBookings(finalBookings);
       } catch (err) {
         console.error('Failed to fetch API data', err);
       }
@@ -374,7 +343,11 @@ export const CleanNestProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       price: newBookingData.totalAmount,
       address: `${newBookingData.customerAddress.street}, ${newBookingData.customerAddress.city}`,
       notes: newBookingData.customerAddress.notes,
-      cleanerId: newBookingData.cleanerId
+      cleanerId: newBookingData.cleanerId,
+      customerName: newBookingData.customerName || currentUser?.name,
+      customerEmail: newBookingData.customerEmail || currentUser?.email,
+      cleanerName: newBookingData.cleanerName,
+      cleanerEmail: newBookingData.cleanerEmail || cleaners.find(c => c.id === newBookingData.cleanerId)?.email
     };
 
 
@@ -394,7 +367,7 @@ export const CleanNestProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           const newBooking: Booking = {
             ...newBookingData,
             id: createdBackendBooking.id,
-            bookingCode: `CN-${Math.floor(1000 + Math.random() * 9000)}`,
+            bookingCode: `CN-${(createdBackendBooking.id || '').substring(0, 4).toUpperCase() || Math.floor(1000 + Math.random() * 9000)}`,
             createdAt: createdBackendBooking.createdAt
           };
           setBookings(prev => {
@@ -537,7 +510,15 @@ export const CleanNestProvider: React.FC<{ children: React.ReactNode }> = ({ chi
               phone: data.phone || prev.phone,
               avatar: data.avatar || prev.avatar
             };
-            localStorage.setItem('cleannest_user', JSON.stringify(updatedUser));
+            try {
+              const storageSafe = {
+                ...updatedUser,
+                avatar: (updatedUser.avatar && updatedUser.avatar.length > 50000)
+                  ? `https://ui-avatars.com/api/?name=${encodeURIComponent(updatedUser.name)}&background=random`
+                  : updatedUser.avatar
+              };
+              localStorage.setItem('cleannest_user', JSON.stringify(storageSafe));
+            } catch {}
             return updatedUser;
           });
         }

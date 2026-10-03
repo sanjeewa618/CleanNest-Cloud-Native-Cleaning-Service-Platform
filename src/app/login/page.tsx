@@ -35,19 +35,41 @@ export default function LoginPage() {
       }
 
       // Save token
-      localStorage.setItem('cleannest_token', data.token);
+      try {
+        localStorage.setItem('cleannest_token', data.token);
+      } catch {}
 
       const userProfile = {
         id: data.user.id,
         name: data.user.name,
         email: data.user.email,
         role: data.user.role.toLowerCase(),
-        avatar: data.user.avatar,
+        avatar: data.user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.user.name)}&background=random`,
         phone: data.user.phone
       };
 
-      // Save full user data so it persists on refresh
-      localStorage.setItem('cleannest_user', JSON.stringify(userProfile));
+      // Save user data safely (avoid storing massive base64 in localStorage)
+      try {
+        const storageSafeProfile = {
+          ...userProfile,
+          avatar: (userProfile.avatar && userProfile.avatar.length > 50000)
+            ? `https://ui-avatars.com/api/?name=${encodeURIComponent(userProfile.name)}&background=random`
+            : userProfile.avatar
+        };
+        localStorage.setItem('cleannest_user', JSON.stringify(storageSafeProfile));
+      } catch (storageErr) {
+        // If localStorage is completely full, clear legacy storage keys and retry
+        try {
+          localStorage.removeItem('cleannest_local_bookings');
+          localStorage.removeItem('cleannest_services');
+          localStorage.setItem('cleannest_user', JSON.stringify({
+            id: userProfile.id,
+            name: userProfile.name,
+            email: userProfile.email,
+            role: userProfile.role
+          }));
+        } catch {}
+      }
 
       // Update context
       setRole(data.user.role.toLowerCase());

@@ -68,7 +68,28 @@ export const Navbar: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [pathname]);
 
-  const activeBookingsCount = bookings.filter(
+  const userBookings = currentUser
+    ? bookings.filter((b) => {
+        if (currentUser.role === 'cleaner') {
+          return (
+            (b.cleanerId && b.cleanerId === currentUser.id) ||
+            (b.cleanerEmail && currentUser.email && b.cleanerEmail.toLowerCase() === currentUser.email.toLowerCase()) ||
+            (b.cleanerName && currentUser.name && b.cleanerName.toLowerCase() === currentUser.name.toLowerCase())
+          );
+        }
+        if (currentUser.role === 'admin') {
+          return true;
+        }
+        // Customer role:
+        return (
+          (b.customerId && b.customerId === currentUser.id) ||
+          (b.customerEmail && currentUser.email && b.customerEmail.toLowerCase() === currentUser.email.toLowerCase()) ||
+          (b.customerName && currentUser.name && b.customerName.trim().toLowerCase() === currentUser.name.trim().toLowerCase())
+        );
+      })
+    : [];
+
+  const activeBookingsCount = userBookings.filter(
     (b) => b.status !== 'completed' && b.status !== 'cancelled'
   ).length;
 

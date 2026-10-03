@@ -43,17 +43,62 @@ export default function CleanerAnalyticsPage() {
     return <div style={{ padding: '80px', textAlign: 'center' }}>Loading analytics...</div>;
   }
 
-  // Filter completed bookings strictly for this cleaner by unique ID
-  const cleanerBookings = bookings.filter(
-    (b) => Boolean(b.cleanerId) && b.cleanerId === cleaner.id
-  );
+  // Filter bookings strictly for this cleaner by unique ID, email, or name
+  const cleanerBookings = bookings.filter((b) => {
+    if (!cleaner) return false;
+    return (
+      (Boolean(b.cleanerId) && b.cleanerId === cleaner.id) ||
+      (b.cleanerEmail && cleaner.email && b.cleanerEmail.toLowerCase() === cleaner.email.toLowerCase()) ||
+      (b.cleanerName && cleaner.name && b.cleanerName.trim().toLowerCase() === cleaner.name.trim().toLowerCase())
+    );
+  });
   const completedJobs = cleanerBookings.filter((b) => b.status === 'completed');
+  const acceptedBookings = cleanerBookings.filter((b) => b.status !== 'cancelled' && b.status !== 'pending');
 
-  // Compute dynamic completed jobs revenue (85% cleaner payout)
-  const completedEarningsTotal = completedJobs.reduce((sum, b) => sum + ((b.totalAmount || (b as any).price || 0) * 0.85), 0);
-  const todayEarnings = (cleaner.earnings?.today || 0) + completedEarningsTotal;
-  const thisWeekEarnings = (cleaner.earnings?.thisWeek || 0) + completedEarningsTotal;
-  const totalLifetimeEarnings = (cleaner.earnings?.total || 0) + completedEarningsTotal;
+  const isDateToday = (b: any): boolean => {
+    const today = new Date();
+    const todayDateStr = today.toDateString();
+    if (b.createdAt) {
+      const d = new Date(b.createdAt);
+      if (!isNaN(d.getTime()) && d.toDateString() === todayDateStr) return true;
+    }
+    if (b.date) {
+      const d = new Date(b.date);
+      if (!isNaN(d.getTime()) && d.toDateString() === todayDateStr) return true;
+    }
+    if (b.selectedDate) {
+      const s = String(b.selectedDate).toLowerCase();
+      if (s.includes('today')) return true;
+      const d = new Date(b.selectedDate);
+      if (!isNaN(d.getTime()) && d.toDateString() === todayDateStr) return true;
+    }
+    return false;
+  };
+
+  const isDateThisWeek = (b: any): boolean => {
+    const now = new Date();
+    const startOfWeek = new Date(now);
+    const day = now.getDay();
+    const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+    startOfWeek.setDate(diff);
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 7);
+
+    const d = b.createdAt ? new Date(b.createdAt) : (b.date ? new Date(b.date) : (b.selectedDate ? new Date(b.selectedDate) : null));
+    if (d && !isNaN(d.getTime())) {
+      return d >= startOfWeek && d < endOfWeek;
+    }
+    return isDateToday(b);
+  };
+
+  const todayAcceptedJobs = acceptedBookings.filter((b) => isDateToday(b));
+  const thisWeekAcceptedJobs = acceptedBookings.filter((b) => isDateThisWeek(b));
+
+  const todayEarnings = todayAcceptedJobs.reduce((sum, b) => sum + (Number(b.totalAmount || (b as any).price) || 0), 0);
+  const thisWeekEarnings = thisWeekAcceptedJobs.reduce((sum, b) => sum + (Number(b.totalAmount || (b as any).price) || 0), 0);
+  const totalLifetimeEarnings = acceptedBookings.reduce((sum, b) => sum + (Number(b.totalAmount || (b as any).price) || 0), 0);
 
   return (
     <div>
@@ -84,8 +129,8 @@ export default function CleanerAnalyticsPage() {
           <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#15803d' }}>
             Rs. {todayEarnings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
-          <div style={{ fontSize: '0.85rem', color: '#16a34a', fontWeight: 600, marginTop: '8px' }}>
-            +{completedJobs.length} completed jobs
+          <div style={{ fontSize: '0.85rem', color: todayAcceptedJobs.length > 0 ? '#16a34a' : '#64748b', fontWeight: 600, marginTop: '8px' }}>
+            +{todayAcceptedJobs.length} booking{todayAcceptedJobs.length === 1 ? '' : 's'} today
           </div>
         </div>
 
@@ -104,7 +149,7 @@ export default function CleanerAnalyticsPage() {
             Rs. {thisWeekEarnings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '8px' }}>
-            Payout scheduled for Monday
+            {thisWeekAcceptedJobs.length} jobs this week
           </div>
         </div>
 
@@ -123,7 +168,7 @@ export default function CleanerAnalyticsPage() {
             Rs. {totalLifetimeEarnings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '8px' }}>
-            Direct bank deposit verified
+            Across {acceptedBookings.length} total accepted bookings
           </div>
         </div>
       </div>
@@ -184,8 +229,8 @@ export default function CleanerAnalyticsPage() {
           
           const dailyData = daysOfWeek.map((day, idx) => {
             const isToday = idx === todayIdx;
-            // Distribute base amount and add completed payouts directly to today
-            const baseAmount = idx < todayIdx ? 35 + (idx * 20) : (isToday ? completedEarningsTotal : 0);
+            // Distribute base amount and add today's earnings directly to today
+            const baseAmount = idx < todayIdx ? 35 + (idx * 20) : (isToday ? todayEarnings : 0);
             return {
               day,
               amount: baseAmount,
@@ -260,7 +305,7 @@ export default function CleanerAnalyticsPage() {
           <div>
             <div style={{ color: '#64748b', fontSize: '0.8rem', fontWeight: 600 }}>Avg. Payout per Job</div>
             <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', marginTop: '4px' }}>
-              Rs. {completedJobs.length > 0 ? (completedEarningsTotal / completedJobs.length).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
+              Rs. {acceptedBookings.length > 0 ? (totalLifetimeEarnings / acceptedBookings.length).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
             </div>
           </div>
           <div>
@@ -319,7 +364,7 @@ export default function CleanerAnalyticsPage() {
 
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontWeight: 800, fontSize: '1.25rem', color: '#15803d', marginBottom: '4px' }}>
-                    +Rs. {(b.totalAmount * 0.85).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    +Rs. {b.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: '#16a34a', fontWeight: 700 }}>
                     Paid to Checking ••••4920

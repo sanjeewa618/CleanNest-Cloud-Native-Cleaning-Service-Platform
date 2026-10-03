@@ -6,11 +6,9 @@ const router = Router();
 
 // Allow status update (with or without auth header) so pipeline updates persist to DB reliably
 router.patch('/:id/status', updateBookingStatus);
-
-// Protect remaining booking routes with JWT middleware
-router.use(authenticate);
-
-router.post('/', createBooking);
 router.get('/', getMyBookings);
+
+// Protect creation with JWT middleware
+router.post('/', authenticate, createBooking);
 
 export default router;

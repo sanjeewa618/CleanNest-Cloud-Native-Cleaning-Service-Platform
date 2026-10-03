@@ -41,10 +41,11 @@ function BookingForm() {
     selectedService.packages.find((p) => p.id === packageParam) ||
     selectedService.packages.find((p) => p.recommended) ||
     selectedService.packages[0];
-  const preselectedCleaner = searchParams.get('cleaner');
+  const preselectedCleaner = searchParams.get('cleaner') || draftBooking?.cleanerId;
+  const hoursParam = searchParams.get('hours');
 
   const [packageId, setPackageId] = useState(initialPackage.id);
-  const [hours, setHours] = useState(draftBooking?.hours || 3);
+  const [hours, setHours] = useState(hoursParam ? parseFloat(hoursParam) : (draftBooking?.hours || 3));
   // --- Dynamic Date/Time Logic ---
   const now = new Date();
 
@@ -89,7 +90,7 @@ function BookingForm() {
     return nowMinutes >= slotEndMinutes;
   };
 
-  const [cleanerChoice, setCleanerChoice] = useState<string>(preselectedCleaner || 'auto'); // 'auto' or cleaner ID
+  const [cleanerChoice, setCleanerChoice] = useState<string>(preselectedCleaner || draftBooking?.cleanerId || 'auto'); // 'auto' or cleaner ID
   const [streetAddress, setStreetAddress] = useState('742 Galle Road, Bambalapitiya');
   const [apt, setApt] = useState('Apt 4B');
   const [city, setCity] = useState('Colombo');
@@ -104,9 +105,13 @@ function BookingForm() {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
-  const chosenCleaner = cleanerChoice !== 'auto'
+  const chosenCleaner = (cleanerChoice && cleanerChoice !== 'auto')
     ? cleaners.find((c) => c.id === cleanerChoice)
-    : (cleaners.find(c => (c.status === 'ACTIVE' || c.status === 'active') && c.specialties?.includes(selectedService.name)) || cleaners[0]);
+    : (draftBooking?.cleanerId ? cleaners.find((c) => c.id === draftBooking.cleanerId) : null) ||
+      cleaners.find(c => (c.status === 'ACTIVE' || c.status === 'active') && c.specialties?.some(s => s.trim().toLowerCase() === selectedService.name.trim().toLowerCase())) ||
+      cleaners.find(c => (c.status === 'ACTIVE' || c.status === 'active') && (c.role?.toLowerCase().includes(selectedService.name.toLowerCase()) || (c as any).category?.toLowerCase() === selectedService.name.toLowerCase())) ||
+      cleaners.find(c => c.status === 'ACTIVE' || c.status === 'active') ||
+      cleaners[0];
 
   const currentPkg = selectedService.packages.find((p) => p.id === packageId) || selectedService.packages[0];
   const serviceDiscountPercent = selectedService.discountPercent || 0;
@@ -171,6 +176,7 @@ function BookingForm() {
       const created = await createBooking({
         customerId: currentUser?.id || 'guest-customer',
         customerName: currentUser?.name || 'Customer',
+        customerEmail: currentUser?.email,
         customerPhone: currentUser?.phone || '+94 77 123 4567',
         customerAddress: {
           street: streetAddress,
@@ -189,6 +195,7 @@ function BookingForm() {
         selectedTimeSlot: selectedTimeSlot,
         cleanerId: chosenCleaner?.id,
         cleanerName: chosenCleaner?.name,
+        cleanerEmail: (chosenCleaner as any)?.email,
         cleanerAvatar: chosenCleaner?.avatar,
         cleanerPhone: chosenCleaner?.phone,
         status: 'pending',
@@ -339,7 +346,7 @@ function BookingForm() {
         }}>
           {/* Left Column: Multi-Step Options */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
-            {/* 1. Service & Package Selection */}
+            {/* 1. Date & Time Selection */}
             <div style={{
               backgroundColor: '#ffffff',
               borderRadius: '24px',
@@ -361,82 +368,6 @@ function BookingForm() {
                   fontSize: '0.875rem'
                 }}>
                   1
-                </div>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a' }}>
-                  Select Package Tier & Hours
-                </h3>
-              </div>
-
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-                gap: '12px',
-                marginBottom: '20px'
-              }}>
-                {selectedService.packages.map((pkg) => {
-                  const isSelected = packageId === pkg.id;
-                  return (
-                    <div
-                      key={pkg.id}
-                      onClick={() => setPackageId(pkg.id)}
-                      style={{
-                        padding: '14px',
-                        borderRadius: '16px',
-                        border: isSelected ? '2px solid #22c55e' : '1px solid #e2e8f0',
-                        backgroundColor: isSelected ? '#f0fdf4' : '#ffffff',
-                        cursor: 'pointer',
-                        textAlign: 'center'
-                      }}
-                    >
-                      <div style={{ fontWeight: 700, fontSize: '0.875rem', color: isSelected ? '#15803d' : '#0f172a' }}>
-                        {pkg.name}
-                      </div>
-                      <div style={{ fontWeight: 800, fontSize: '1.15rem', color: '#0f172a', margin: '4px 0' }}>
-                        Rs. {pkg.pricePerHour.toLocaleString()}<span style={{ fontSize: '0.75rem', color: '#64748b' }}>/hr</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#334155', marginBottom: '8px' }}>
-                  Duration: {hours} Hours
-                </label>
-                <input
-                  type="range"
-                  min="2"
-                  max="8"
-                  step="0.5"
-                  value={hours}
-                  onChange={(e) => setHours(parseFloat(e.target.value))}
-                  style={{ width: '100%', accentColor: '#15803d', cursor: 'pointer' }}
-                />
-              </div>
-            </div>
-
-            {/* 2. Date & Time Selection */}
-            <div style={{
-              backgroundColor: '#ffffff',
-              borderRadius: '24px',
-              padding: '28px',
-              border: '1px solid #e2e8f0',
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.03)'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-                <div style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
-                  backgroundColor: '#15803d',
-                  color: '#ffffff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 700,
-                  fontSize: '0.875rem'
-                }}>
-                  2
                 </div>
                 <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a' }}>
                   Date & Arrival Time Slot
@@ -517,7 +448,7 @@ function BookingForm() {
               </div>
             </div>
 
-            {/* 3. Address & Entry Instructions */}
+            {/* 2. Address & Entry Instructions */}
             <div style={{
               backgroundColor: '#ffffff',
               borderRadius: '24px',
@@ -538,7 +469,7 @@ function BookingForm() {
                   fontWeight: 700,
                   fontSize: '0.875rem'
                 }}>
-                  3
+                  2
                 </div>
                 <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a' }}>
                   Service Address & Access
@@ -608,7 +539,7 @@ function BookingForm() {
               </div>
             </div>
 
-            {/* 4. Cleaner Selection */}
+            {/* 3. Optional Add-ons */}
             <div style={{
               backgroundColor: '#ffffff',
               borderRadius: '24px',
@@ -629,110 +560,7 @@ function BookingForm() {
                   fontWeight: 700,
                   fontSize: '0.875rem'
                 }}>
-                  4
-                </div>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a' }}>
-                  Cleaner Matching Preference
-                </h3>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {/* Auto Match */}
-                <div
-                  onClick={() => setCleanerChoice('auto')}
-                  style={{
-                    padding: '16px',
-                    borderRadius: '16px',
-                    border: cleanerChoice === 'auto' ? '2px solid #22c55e' : '1px solid #e2e8f0',
-                    backgroundColor: cleanerChoice === 'auto' ? '#f0fdf4' : '#ffffff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{
-                      width: '42px',
-                      height: '42px',
-                      borderRadius: '50%',
-                      backgroundColor: '#dcfce7',
-                      color: '#15803d',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}>
-                      <Sparkles size={20} />
-                    </div>
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: '0.9375rem', color: '#0f172a' }}>
-                        Auto-Match Highest Rated Cleaner (Recommended)
-                      </div>
-                      <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
-                        Platform automatically matches the top available 5-star pro nearest to your address
-                      </div>
-                    </div>
-                  </div>
-                  {cleanerChoice === 'auto' && <CheckCircle2 size={20} color="#15803d" />}
-                </div>
-
-                {/* Specific Cleaners */}
-                {cleaners.filter(c => c.status === 'ACTIVE' || c.status === 'active').map((c) => (
-                  <div
-                    key={c.id}
-                    onClick={() => setCleanerChoice(c.id)}
-                    style={{
-                      padding: '14px 16px',
-                      borderRadius: '16px',
-                      border: cleanerChoice === c.id ? '2px solid #22c55e' : '1px solid #e2e8f0',
-                      backgroundColor: cleanerChoice === c.id ? '#f0fdf4' : '#ffffff',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <img
-                        src={c.avatar}
-                        alt={c.name}
-                        style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover' }}
-                      />
-                      <div>
-                        <div style={{ fontWeight: 700, fontSize: '0.9375rem', color: '#0f172a' }}>{c.name}</div>
-                        <div style={{ fontSize: '0.78rem', color: '#64748b' }}>
-                          ⭐ {c.rating} ({c.reviewCount} reviews) • {c.jobsCompleted} cleanings completed
-                        </div>
-                      </div>
-                    </div>
-                    {cleanerChoice === c.id && <CheckCircle2 size={20} color="#15803d" />}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* 5. Optional Add-ons */}
-            <div style={{
-              backgroundColor: '#ffffff',
-              borderRadius: '24px',
-              padding: '28px',
-              border: '1px solid #e2e8f0',
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.03)'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-                <div style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
-                  backgroundColor: '#15803d',
-                  color: '#ffffff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 700,
-                  fontSize: '0.875rem'
-                }}>
-                  5
+                  3
                 </div>
                 <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a' }}>
                   Popular Add-Ons

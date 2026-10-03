@@ -36,13 +36,13 @@ export default function CustomerBookingsPage() {
   const [newDateInput, setNewDateInput] = useState('Next Monday, Oct 6th');
   const [newTimeInput, setNewTimeInput] = useState('10:00 AM - 01:00 PM');
 
-  // Filter bookings for current logged-in customer (or show created real bookings)
+  // Filter bookings for current logged-in customer
   const userBookings = bookings.filter((b) => {
-    if (!currentUser) return true;
+    if (!currentUser) return false;
     return (
       (Boolean(b.customerId) && b.customerId === currentUser.id) ||
-      (Boolean(b.customerName) && Boolean(currentUser.name) && b.customerName === currentUser.name) ||
-      !b.customerId
+      (b.customerEmail && currentUser.email && b.customerEmail.toLowerCase() === currentUser.email.toLowerCase()) ||
+      (b.customerName && currentUser.name && b.customerName.trim().toLowerCase() === currentUser.name.trim().toLowerCase())
     );
   });
 
@@ -190,14 +190,6 @@ export default function CustomerBookingsPage() {
               Track cleaner ETA in real-time, reschedule, or review completed jobs.
             </p>
           </div>
-
-          <Link
-            href="/booking"
-            className="btn btn-primary"
-            style={{ borderRadius: '9999px', padding: '12px 24px' }}
-          >
-            <span>+ Book New Cleaning</span>
-          </Link>
         </div>
 
         {/* Tab Filters */}
@@ -245,7 +237,7 @@ export default function CustomerBookingsPage() {
             <p style={{ color: '#64748b', marginBottom: '20px' }}>
               Ready to give your home a sparkling makeover?
             </p>
-            <Link href="/booking" className="btn btn-primary">
+            <Link href="/#popular-services" className="btn btn-primary">
               Book a Service Now
             </Link>
           </div>

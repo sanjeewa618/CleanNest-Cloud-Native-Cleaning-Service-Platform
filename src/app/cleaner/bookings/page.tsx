@@ -54,10 +54,15 @@ export default function CleanerBookingsPage() {
     return <div style={{ padding: '80px', textAlign: 'center' }}>Loading bookings...</div>;
   }
 
-  // Filter bookings strictly assigned to this cleaner by unique ID
-  const cleanerBookings = bookings.filter(
-    (b) => Boolean(b.cleanerId) && b.cleanerId === cleaner.id
-  );
+  // Filter bookings strictly assigned to this cleaner by unique ID, email, or name
+  const cleanerBookings = bookings.filter((b) => {
+    if (!cleaner) return false;
+    return (
+      (Boolean(b.cleanerId) && b.cleanerId === cleaner.id) ||
+      (b.cleanerEmail && cleaner.email && b.cleanerEmail.toLowerCase() === cleaner.email.toLowerCase()) ||
+      (b.cleanerName && cleaner.name && b.cleanerName.trim().toLowerCase() === cleaner.name.trim().toLowerCase())
+    );
+  });
 
   const handleStatusChange = (bookingId: string, nextStatus: Booking['status']) => {
     updateBookingStatus(bookingId, nextStatus);
@@ -150,7 +155,7 @@ export default function CleanerBookingsPage() {
                 <div>
                   <div style={{ color: '#64748b', fontSize: '0.75rem' }}>Payout for Job:</div>
                   <div style={{ fontWeight: 800, color: '#15803d', fontSize: '1.15rem' }}>
-                    Rs. {(b.totalAmount * 0.85).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    Rs. {b.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </div>
                 </div>
               </div>

@@ -246,8 +246,32 @@ export default function CleanerProfilePage() {
                       const file = e.target.files?.[0];
                       if (file) {
                         const reader = new FileReader();
-                        reader.onloadend = () => {
-                          setEditForm({...editForm, avatar: reader.result as string});
+                        reader.onload = (event) => {
+                          const img = new Image();
+                          img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            const maxDim = 250;
+                            let width = img.width;
+                            let height = img.height;
+                            if (width > height) {
+                              if (width > maxDim) {
+                                height = Math.round((height * maxDim) / width);
+                                width = maxDim;
+                              }
+                            } else {
+                              if (height > maxDim) {
+                                width = Math.round((width * maxDim) / height);
+                                height = maxDim;
+                              }
+                            }
+                            canvas.width = width;
+                            canvas.height = height;
+                            const ctx = canvas.getContext('2d');
+                            ctx?.drawImage(img, 0, 0, width, height);
+                            const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                            setEditForm({ ...editForm, avatar: compressedDataUrl });
+                          };
+                          img.src = event.target?.result as string;
                         };
                         reader.readAsDataURL(file);
                       }
@@ -258,7 +282,7 @@ export default function CleanerProfilePage() {
                       cursor: 'pointer'
                     }}
                   />
-                  {editForm.avatar && editForm.avatar.startsWith('data:image') && (
+                  {editForm.avatar && (
                     <img src={editForm.avatar} alt="Preview" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
                   )}
                 </div>

@@ -10,6 +10,10 @@ const bookingSchema = z.object({
   price: z.number(),
   address: z.string(),
   cleanerId: z.string().optional(),
+  customerName: z.string().optional(),
+  customerEmail: z.string().optional(),
+  cleanerName: z.string().optional(),
+  cleanerEmail: z.string().optional(),
   notes: z.string().optional()
 });
 
@@ -20,12 +24,40 @@ export const createBooking = async (req: AuthRequest, res: Response) => {
 
     const validatedData = bookingSchema.parse(req.body);
 
+    // Resolve customerName & customerEmail from database or token
+    let customerName = validatedData.customerName;
+    let customerEmail = validatedData.customerEmail;
+    if (!customerName || !customerEmail) {
+      const cust = await prisma.user.findUnique({
+        where: { id: customerId },
+        select: { name: true, email: true }
+      });
+      if (!customerName) customerName = cust?.name || 'Customer';
+      if (!customerEmail) customerEmail = cust?.email || undefined;
+    }
+
+    // Resolve cleanerName & cleanerEmail from database if cleanerId is provided
+    let cleanerName = validatedData.cleanerName;
+    let cleanerEmail = validatedData.cleanerEmail;
+    if (validatedData.cleanerId && (!cleanerName || !cleanerEmail)) {
+      const cln = await prisma.user.findUnique({
+        where: { id: validatedData.cleanerId },
+        select: { name: true, email: true }
+      });
+      if (!cleanerName) cleanerName = cln?.name || undefined;
+      if (!cleanerEmail) cleanerEmail = cln?.email || undefined;
+    }
+
     const booking = await prisma.booking.create({
       data: {
         ...validatedData,
         date: new Date(validatedData.date),
-        customerId
-      }
+        customerId,
+        customerName,
+        customerEmail,
+        cleanerName,
+        cleanerEmail
+      } as any
     });
 
     res.status(201).json(booking);
@@ -33,36 +65,76 @@ export const createBooking = async (req: AuthRequest, res: Response) => {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: error.errors });
     }
+    console.error('Failed to create booking', error);
     res.status(500).json({ error: 'Failed to create booking' });
   }
 };
 
 export const getMyBookings = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user?.id;
-    const role = req.user?.role;
-    
-    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+    const authHeader = req.headers.authorization;
+    let userId = req.user?.id;
+    let role = req.user?.role;
+
+    if (!userId && authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        const { verifyToken } = require('../utils/jwt');
+        const decoded: any = verifyToken(authHeader.split(' ')[1]);
+        userId = decoded?.id;
+        role = decoded?.role;
+      } catch (e) {
+        // ignore
+      }
+    }
 
     let bookings;
-    if (role === 'CUSTOMER') {
+    if (role === 'CUSTOMER' && userId) {
+      const userEmail = req.user?.email;
+      const userName = req.user?.name;
       bookings = await prisma.booking.findMany({
-        where: { customerId: userId },
-        include: { cleaner: { select: { name: true, avatar: true } } },
+        where: {
+          OR: [
+            { customerId: userId },
+            ...(userEmail ? [{ customerEmail: userEmail } as any] : []),
+            ...(userName ? [{ customerName: userName } as any] : [])
+          ]
+        },
+        include: {
+          cleaner: { select: { id: true, name: true, avatar: true, phone: true } },
+          customer: { select: { id: true, name: true, phone: true, email: true } }
+        },
         orderBy: { createdAt: 'desc' }
       });
-    } else if (role === 'CLEANER') {
+    } else if (role === 'CLEANER' && userId) {
+      const userEmail = req.user?.email;
+      const userName = req.user?.name;
       bookings = await prisma.booking.findMany({
-        where: { cleanerId: userId },
-        include: { customer: { select: { name: true, phone: true } } },
+        where: {
+          OR: [
+            { cleanerId: userId },
+            ...(userEmail ? [{ cleanerEmail: userEmail } as any] : []),
+            ...(userName ? [{ cleanerName: userName } as any] : [])
+          ]
+        },
+        include: {
+          customer: { select: { id: true, name: true, phone: true, email: true } },
+          cleaner: { select: { id: true, name: true, avatar: true, phone: true } }
+        },
         orderBy: { createdAt: 'desc' }
       });
     } else {
-      bookings = await prisma.booking.findMany(); // admin
+      bookings = await prisma.booking.findMany({
+        include: {
+          cleaner: { select: { id: true, name: true, avatar: true, phone: true } },
+          customer: { select: { id: true, name: true, phone: true, email: true } }
+        },
+        orderBy: { createdAt: 'desc' }
+      }); // admin / global
     }
 
     res.json(bookings);
   } catch (error) {
+    console.error('Failed to fetch bookings', error);
     res.status(500).json({ error: 'Failed to fetch bookings' });
   }
 };
